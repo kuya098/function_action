@@ -124,11 +124,11 @@ export class Hazard {
 }
 
 export class Goal {
-  constructor(x, y, width = 0.5, height = 0.5) {
+  constructor(x, y, size = 1.0) {
     this.x = x;
     this.y = y;
-    this.width = width;
-    this.height = height;
+    this.width = size;
+    this.height = size;
   }
 
   draw(ctx, originX, originY, scaleX, scaleY) {
@@ -170,4 +170,5 @@ export class Goal {
     return !(pxRight < gxLeft || pxLeft > gxRight || pyTop < gyBottom || pyBottom > gyTop);
   }
 }
+
 
