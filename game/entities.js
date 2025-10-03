@@ -134,7 +134,7 @@ export class Goal {
   draw(ctx, originX, originY, scaleX, scaleY) {
     if (!Goal.goalImage) {
       Goal.goalImage = new Image();
-      Goal.goalImage.src = 'game/images/goal.png';
+      Goal.goalImage.src = 'game/images/flag.png';
     }
     if (Goal.goalImage.complete && Goal.goalImage.naturalWidth > 0) {
       ctx.drawImage(
@@ -170,5 +170,6 @@ export class Goal {
     return !(pxRight < gxLeft || pxLeft > gxRight || pyTop < gyBottom || pyBottom > gyTop);
   }
 }
+
 
 
