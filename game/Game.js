@@ -42,7 +42,7 @@ export class Game {
           this.hazards.push(new Hazard(item.x, item.y, item.width, item.height));
         });
       }
-      this.goal = new Goal(stage.goal.x, stage.goal.y, stage.goal.width, stage.goal.height);
+      this.goal = new Goal(stage.goal.x, stage.goal.y);
     }
     this.collectedCount = 0;
     this.running = true;
@@ -325,4 +325,5 @@ export class Game {
       console.log("Game stopped");
     }
   }
+
 }
