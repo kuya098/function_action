@@ -302,6 +302,7 @@ export class Game {
   }
 
   showScoreScreenUI() {
+    console.log('showScoreScreenUI: start', this.state);
     // 既存のスコア画面UIを削除
     let scoreScreenUI = document.getElementById('score-screen-ui');
     if (scoreScreenUI) scoreScreenUI.remove();
@@ -422,6 +423,7 @@ export class Game {
 
     // リスタートボタン
     const restartBtn = this.createIconButton('↺ リスタート', '#2196F3', () => {
+      console.log('restartBtn clicked');
       this.cleanup();
       this._lastScoreButton = "restart";
       this.restart();
@@ -430,6 +432,7 @@ export class Game {
 
     // ホームボタン
     const homeBtn = this.createIconButton('⌂ ホーム', '#4caf50', () => {
+      console.log('homeBtn clicked');
       this.cleanup();
       this._lastScoreButton = "home";
       this.running = false;
@@ -439,6 +442,7 @@ export class Game {
     // NEXTボタン（CLEAR!かつ最終ステージでない場合）
     if (this.state === "CLEAR!" && this.stageId < Game.MAX_STAGE) {
       const nextBtn = this.createIconButton('→ 次へ', '#FF9800', () => {
+        console.log('nextBtn clicked');
         this.cleanup();
         this._lastScoreButton = "next";
         this.running = false;
@@ -452,6 +456,7 @@ export class Game {
   }
 
   createIconButton(label, bgColor, onClick) {
+    console.log('createIconButton:', label);
     const btn = document.createElement('button');
     btn.style.cssText = `
       padding: 15px 25px;
