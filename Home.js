@@ -44,9 +44,9 @@ export function drawHome(ctx, canvas, onStageSelect) {
   `;
 
   const stages = [
-    { id: 1, name: '初級', icon: 'fa-flag' },
-    { id: 2, name: '中級', icon: 'fa-star' },
-    { id: 3, name: '上級', icon: 'fa-crown' }
+    { id: 1, name: 'ステージ1' },
+    { id: 2, name: 'ステージ2' },
+    { id: 3, name: 'ステージ3' }
   ];
 
   stages.forEach(stage => {
@@ -77,15 +77,10 @@ export function drawHome(ctx, canvas, onStageSelect) {
       button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
     };
 
-    // アイコン + テキスト
-    const icon = document.createElement('i');
-    icon.className = `fas ${stage.icon}`;
-    icon.style.fontSize = '24px';
-
+    // テキストのみ
     const label = document.createElement('span');
     label.textContent = stage.name;
 
-    button.appendChild(icon);
     button.appendChild(label);
 
     button.onclick = () => {
