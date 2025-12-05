@@ -72,15 +72,6 @@ export class Game {
 
   initInputField() {
     const input = document.getElementById('expr');
-    const btn = document.getElementById('setBtn');
-    
-    if (btn) {
-      btn.addEventListener('click', () => {
-        if (input) {
-          this.setFunction(input.value);
-        }
-      });
-    }
     
     if (input) {
       input.addEventListener('keydown', (e) => {
