@@ -15,14 +15,26 @@ export function startGame(canvas, ctx, stageId) {
   let input = document.getElementById(inputId);
   if (!input) {
     input = createInputField(inputId);
-    document.body.appendChild(input);
+    // .input-containerに追加
+    const inputContainer = document.querySelector('.input-container');
+    if (inputContainer) {
+      inputContainer.appendChild(input);
+    } else {
+      document.body.appendChild(input);
+    }
   }
 
   // ボタンの初期化
   let button = document.getElementById(buttonId);
   if (!button) {
     button = createButton(buttonId);
-    document.body.appendChild(button);
+    // .input-containerに追加
+    const inputContainer = document.querySelector('.input-container');
+    if (inputContainer) {
+      inputContainer.appendChild(button);
+    } else {
+      document.body.appendChild(button);
+    }
   }
 
   // ゲーム開始
