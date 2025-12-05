@@ -37,7 +37,8 @@ export class SoundManager {
     if (this.sounds[name]) {
       // 同じ音を重ねて再生できるようにクローンを作成
       const sound = this.sounds[name].cloneNode();
-      sound.volume = this.seVolume;
+      // coin は常に最大音量、他はseVolumeに従う
+      sound.volume = (name === 'coin') ? 1.0 : this.seVolume;
       sound.play().catch(e => console.log('SE play error:', e));
     }
   }

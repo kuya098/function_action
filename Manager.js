@@ -1,9 +1,20 @@
 import { drawHome } from './Home.js';
+import { drawSettings } from './Settings.js';
 import { startGame } from './game/Main.js';
 import { soundManager } from './game/SoundManager.js';
 
 // グローバルにsoundManagerを設定
 window.soundManager = soundManager;
+
+// localStorageから音量設定を読み込む
+const savedBGMVolume = localStorage.getItem('bgmVolume');
+const savedSEVolume = localStorage.getItem('seVolume');
+if (savedBGMVolume !== null) {
+  soundManager.setBGMVolume(parseFloat(savedBGMVolume));
+}
+if (savedSEVolume !== null) {
+  soundManager.setSEVolume(parseFloat(savedSEVolume));
+}
 
 // Canvas作成
 const canvas = document.getElementById("canvas");
@@ -39,6 +50,16 @@ function showHome() {
   window.showHome = showHome;
 }
 
+function showSettings() {
+  if (removeHomeClick) {
+    removeHomeClick();
+    removeHomeClick = null;
+  }
+  drawSettings(ctx, canvas, () => {
+    showHome();
+  });
+}
+
 function showGame(stageId) {
   // 画面遷移時にscore-screen-uiを必ず削除
   const scoreScreenUI = document.getElementById('score-screen-ui');
@@ -61,6 +82,8 @@ window.nextStage = function() {
   //   location.reload();
   }
 };
+
+window.showSettings = showSettings;
 
 // 初期表示
 showHome();

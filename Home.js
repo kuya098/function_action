@@ -147,6 +147,40 @@ export function drawHome(ctx, canvas, onStageSelect) {
 
   homeContainer.appendChild(stagesContainer);
 
+  // 設定ボタン
+  const settingsButton = document.createElement('button');
+  settingsButton.innerHTML = '<i class="fas fa-cog"></i> 設定';
+  settingsButton.style.cssText = `
+    margin-top: 20px;
+    padding: 15px 30px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    width: 100%;
+  `;
+  
+  settingsButton.onmouseover = () => {
+    settingsButton.style.transform = 'translateY(-3px)';
+    settingsButton.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+  };
+  settingsButton.onmouseout = () => {
+    settingsButton.style.transform = 'translateY(0)';
+    settingsButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+  };
+  
+  settingsButton.onclick = () => {
+    soundManager.playSE('button');
+    window.showSettings();
+  };
+  
+  homeContainer.appendChild(settingsButton);
+
   // 入力欄・ボタンを隠す
   const input = document.getElementById('expr');
   const drawBtn = document.getElementById('drawBtn');
