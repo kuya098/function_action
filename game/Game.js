@@ -142,7 +142,7 @@ export class Game {
         if (!rp.check(fn)) {
           const input = document.getElementById('expr');
           if (input) input.value = this.fnText;
-          alert('関数の式が不正です');
+          alert('要求された点を通っていません');
           return;
         }
       }
