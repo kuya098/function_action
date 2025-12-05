@@ -17,12 +17,10 @@ export class Game {
     this.ctx = ctx;
     this.WIDTH = canvas.width;
     this.HEIGHT = canvas.height;
-    this.inputAreaHeight = 50; // 下部の入力エリア高さ
-    this.playHeight = this.HEIGHT - this.inputAreaHeight;
     this.scaleX = 50;
     this.scaleY = 50;
     this.originX = 50;
-    this.originY = this.playHeight - 50; // 入力エリア分だけ上にずらす
+    this.originY = this.HEIGHT - 50;
 
     this.keys = { left: false, right: false, up: false };
     this.player = new Player(0, 0);
@@ -127,20 +125,15 @@ export class Game {
     const ctx = this.ctx;
     ctx.strokeStyle = "#ddd";
     ctx.lineWidth = 1;
-    const gridHeight = this.playHeight;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, this.WIDTH, gridHeight); // 入力エリアを除外するためにクリップ
-    ctx.clip();
 
     for (let x = 0; x <= this.WIDTH; x += this.scaleX) {
       ctx.beginPath();
       ctx.moveTo(x + this.originX % this.scaleX, 0);
-      ctx.lineTo(x + this.originX % this.scaleX, gridHeight);
+      ctx.lineTo(x + this.originX % this.scaleX, this.HEIGHT);
       ctx.stroke();
     }
 
-    for (let y = 0; y <= gridHeight; y += this.scaleY) {
+    for (let y = 0; y <= this.HEIGHT; y += this.scaleY) {
       ctx.beginPath();
       ctx.moveTo(0, y + this.originY % this.scaleY);
       ctx.lineTo(this.WIDTH, y + this.originY % this.scaleY);
@@ -151,7 +144,7 @@ export class Game {
     ctx.strokeStyle = "#333";
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(0, this.originY); ctx.lineTo(this.WIDTH, this.originY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(this.originX, 0); ctx.lineTo(this.originX, gridHeight); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(this.originX, 0); ctx.lineTo(this.originX, this.HEIGHT); ctx.stroke();
 
     // メモリ
     ctx.fillStyle = "#333";
@@ -164,7 +157,7 @@ export class Game {
     }
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    for (let y = -Math.floor((gridHeight - this.originY)/this.scaleY); y <= Math.floor(this.originY/this.scaleY); y++) {
+    for (let y = -Math.floor((this.HEIGHT - this.originY)/this.scaleY); y <= Math.floor(this.originY/this.scaleY); y++) {
       if (y === 0 || y === -1 || y === 7) continue;
       ctx.fillText(y, this.originX - 4, this.originY - y*this.scaleY);
     }
@@ -178,8 +171,6 @@ export class Game {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText("-1", this.originX - this.scaleX, this.originY + 4);
-
-    ctx.restore();
   }
 
   // --- クリックイベント管理 ---
@@ -296,47 +287,6 @@ export class Game {
   draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
-    // 入力エリアは常に白背景で確保（他の描画は載せない）
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, this.playHeight, this.WIDTH, this.inputAreaHeight);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, this.playHeight, this.WIDTH, this.inputAreaHeight);
-
-    // LaTeX数式表示（表示専用）
-    if (this.displayLatex) {
-      if (!this._latexContainer) {
-        this._latexContainer = document.createElement('div');
-        this._latexContainer.style.position = 'absolute';
-        this._latexContainer.style.pointerEvents = 'none';
-        document.body.appendChild(this._latexContainer);
-      }
-      const rect = this.canvas.getBoundingClientRect();
-      this._latexContainer.style.left = (rect.left + 10) + 'px';
-      this._latexContainer.style.top = (rect.top + this.playHeight + 5) + 'px';
-      this._latexContainer.style.fontSize = '20px';
-      try {
-        katex.render(this.displayLatex, this._latexContainer, { throwOnError: false });
-      } catch (e) {
-        this._latexContainer.textContent = this.fnText;
-      }
-    } else if (this.fnText) {
-      // LaTeX変換できない場合は通常テキスト
-      ctx.fillStyle = "black";
-      ctx.font = "20px Arial";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      const textX = 10;
-      const textY = this.playHeight + this.inputAreaHeight / 2;
-      ctx.fillText(this.fnText, textX, textY);
-      if (this._latexContainer) {
-        this._latexContainer.textContent = '';
-      }
-    } else {
-      if (this._latexContainer) {
-        this._latexContainer.textContent = '';
-      }
-    }
 
     this.drawGrid();
     this.platforms.forEach(p => p.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY));
