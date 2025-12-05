@@ -12,15 +12,32 @@ fetch('game/stage_data.json')
   });
 
 export class Game {
+  // === 定数 ===
+  static get CANVAS_WIDTH() { return 800; }
+  static get CANVAS_HEIGHT() { return 600; }
+  static get SCALE_X() { return 50; }
+  static get SCALE_Y() { return 50; }
+  static get ORIGIN_X() { return 50; }
+  static get ORIGIN_Y_OFFSET() { return 50; }
+  static get BOX_WIDTH() { return 340; }
+  static get BOX_HEIGHT() { return 260; }
+  static get BTN_WIDTH() { return 90; }
+  static get BTN_HEIGHT() { return 48; }
+  static get BTN_GAP() { return 60; }
+  static get BTN_MARGIN() { return 24; }
+  static get COIN_SIZE() { return 60; }
+  static get COIN_MARGIN() { return 30; }
+  static get MAX_STAGE() { return 3; }
+
   constructor(canvas, ctx, stageId) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.WIDTH = canvas.width;
     this.HEIGHT = canvas.height;
-    this.scaleX = 50;
-    this.scaleY = 50;
-    this.originX = 50;
-    this.originY = this.HEIGHT - 50;
+    this.scaleX = Game.SCALE_X;
+    this.scaleY = Game.SCALE_Y;
+    this.originX = Game.ORIGIN_X;
+    this.originY = this.HEIGHT - Game.ORIGIN_Y_OFFSET;
 
     this.keys = { left: false, right: false, up: false };
     this.player = new Player(0, 0);
@@ -30,31 +47,39 @@ export class Game {
     this.displayLatex = ""; // 表示用LaTeX
 
     this.stageId = stageId;
-    const stage = stageData[String(this.stageId)];
-    if (stage) {
-      // ステージデータからプラットフォームを生成
-      this.collectibles = [];
-      stage.collectibles.forEach(item => {
-        this.collectibles.push(new Collectible(item.x, item.y));
-      });
-      this.hazards = [];
-      if (stage.hazards) {
-        stage.hazards.forEach(item => {
-          this.hazards.push(new Hazard(item.x, item.y, item.width, item.height));
-        });
-      }
-      this.goal = new Goal(stage.goal.x, stage.goal.y);
-    }
+    this.initializeStage();
     this.collectedCount = 0;
     this.running = true;
     this.state = "playing";
 
     this.initInput();
     this.initClickHandler();
-    this.initInputField(); // HTML入力欄の初期化
+    this.initInputField();
     this.loop();
   }
 
+  // === ステージ初期化 ===
+  initializeStage() {
+    const stage = stageData[String(this.stageId)];
+    if (stage) {
+      // コレクティブル
+      this.collectibles = [];
+      stage.collectibles?.forEach(item => {
+        this.collectibles.push(new Collectible(item.x, item.y));
+      });
+
+      // ハザード
+      this.hazards = [];
+      stage.hazards?.forEach(item => {
+        this.hazards.push(new Hazard(item.x, item.y, item.width, item.height));
+      });
+
+      // ゴール
+      this.goal = new Goal(stage.goal.x, stage.goal.y);
+    }
+  }
+
+  // === 入力処理 ===
   initInput() {
     document.addEventListener("keydown", e => {
       if (e.code === "ArrowLeft") this.keys.left = true;
@@ -70,18 +95,31 @@ export class Game {
 
   initInputField() {
     const input = document.getElementById('expr');
-    
     if (input) {
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           this.setFunction(input.value);
         }
       });
-      
-      // 入力値が変わったらLaTeX表示を更新
       input.addEventListener('input', () => {
         this.updateDisplayLatex(input.value);
       });
+    }
+  }
+
+  setFunction(expr) {
+    try {
+      const compiled = math.compile(expr);
+      compiled.evaluate({ x: 0 });
+      this.functionPlatform.fn = x => compiled.evaluate({ x });
+      this.fnText = expr;
+      this.updateDisplayLatex(expr);
+      const input = document.getElementById('expr');
+      if (input) input.value = expr;
+    } catch (e) {
+      const input = document.getElementById('expr');
+      if (input) input.value = this.fnText;
+      alert('関数の式が不正です');
     }
   }
 
@@ -98,29 +136,7 @@ export class Game {
     // 互換性のため残す（使われていない）
   }
 
-  setFunction(expr) {
-    try {
-      const compiled = math.compile(expr);
-      // テスト評価（エラー検出用）
-      compiled.evaluate({ x: 0 });
-      // 正常なら関数をセット
-      this.functionPlatform.fn = x => compiled.evaluate({ x });
-      this.fnText = expr;
-      this.updateDisplayLatex(expr);
-      // 入力欄の値を最新関数に
-      const input = document.getElementById('expr');
-      if (input) input.value = expr;
-    } catch (e) {
-      // エラー時：入力欄を現在描画中の関数に戻す
-      const input = document.getElementById('expr');
-      if (input) {
-        input.value = this.fnText;
-      }
-      // エラーメッセージ表示
-      alert('関数の式が不正です');
-    }
-  }
-
+  // === グリッド描画 ===
   drawGrid() {
     const ctx = this.ctx;
     ctx.strokeStyle = "#ddd";
@@ -147,20 +163,31 @@ export class Game {
     ctx.beginPath(); ctx.moveTo(this.originX, 0); ctx.lineTo(this.originX, this.HEIGHT); ctx.stroke();
 
     // メモリ
+    this.drawAxisLabels();
+  }
+
+  drawAxisLabels() {
+    const ctx = this.ctx;
     ctx.fillStyle = "#333";
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
+
+    // X軸メモリ
     for (let x = -Math.floor(this.originX/this.scaleX); x <= Math.floor((this.WIDTH - this.originX)/this.scaleX); x++) {
       if (x === 0 || x === -1 || x === 11) continue;
       ctx.fillText(x, this.originX + x*this.scaleX, this.originY + 4);
     }
+
+    // Y軸メモリ
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     for (let y = -Math.floor((this.HEIGHT - this.originY)/this.scaleY); y <= Math.floor(this.originY/this.scaleY); y++) {
       if (y === 0 || y === -1 || y === 7) continue;
       ctx.fillText(y, this.originX - 4, this.originY - y*this.scaleY);
     }
+
+    // 原点と特殊点
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
     ctx.fillText("0", this.originX - 4, this.originY + 4);
@@ -173,10 +200,9 @@ export class Game {
     ctx.fillText("-1", this.originX - this.scaleX, this.originY + 4);
   }
 
-  // --- クリックイベント管理 ---
+  // === イベント処理 ===
   initClickHandler() {
     this._canvasClickHandler = (e) => {
-      // スコア画面のボタン判定
       if (this.state !== "playing" && this._scoreButtons) {
         const rect = this.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
@@ -199,27 +225,30 @@ export class Game {
     }
   }
 
-  // リスタート処理（必要に応じてmain.js等から呼び出し）
+  // === リスタート処理 ===
   restart() {
-    // 必要な初期化処理をここに記述（例：位置・スコア・状態リセットなど）
     this.player.x = 0;
     this.player.y = 0;
     this.player.velocity = { x: 0, y: 0 };
     this.collectedCount = 0;
     this.collectibles.forEach(c => c.collected = false);
     this.state = "playing";
-    // 入力関数を0にリセット
     this.functionPlatform.fn = x => 0;
-    // 入力欄も0にリセット
     const input = document.getElementById('expr');
     if (input) input.value = '0';
   }
 
+  // === ゲームロジック更新 ===
   update() {
     if (this.state !== "playing") return;
 
     this.player.update(this.keys, this.functionPlatform.fn);
+    this.checkGameState();
+    this.checkCollisions();
+    this.prepareScoreUI();
+  }
 
+  checkGameState() {
     // gameover判定
     if (this.player.y <= -1) {
       this.state = "GAME OVER";
@@ -228,7 +257,10 @@ export class Game {
     if (this.goal.check(this.player)) {
       this.state = "CLEAR!";
     }
+  }
 
+  checkCollisions() {
+    // ハザード判定
     if (this.hazards.some(h => h.check(this.player))) {
       this.state = "GAME OVER";
     }
@@ -237,57 +269,55 @@ export class Game {
     this.collectibles.forEach(c => {
       if (c.check(this.player)) this.collectedCount++;
     });
-
-    this.getScoreCoors();
   }
 
-  getScoreCoors() {
-      // ボタン情報を配列で管理
-      const boxWidth = 340, boxHeight = 260;
-      const boxX = this.WIDTH/2 - boxWidth/2;
-      const boxY = this.HEIGHT/2 - boxHeight/2;
-      const btnWidth = 90, btnHeight = 48, btnGap = 60;
-      const btnHomeX = this.WIDTH/2;
-      const btnRestartX = btnHomeX - btnWidth - btnGap;
-      const btnNextX = btnHomeX + btnWidth + btnGap; // ← btnNextXを必ず定義
-      const btnY = boxY + boxHeight - btnHeight - 24;
+  prepareScoreUI() {
+    const boxX = this.WIDTH / 2 - Game.BOX_WIDTH / 2;
+    const boxY = this.HEIGHT / 2 - Game.BOX_HEIGHT / 2;
+    const btnHomeX = this.WIDTH / 2;
+    const btnRestartX = btnHomeX - Game.BTN_WIDTH - Game.BTN_GAP;
+    const btnNextX = btnHomeX + Game.BTN_WIDTH + Game.BTN_GAP;
+    const btnY = boxY + Game.BOX_HEIGHT - Game.BTN_HEIGHT - Game.BTN_MARGIN;
 
-      this._lastScoreButton = null; // どのボタンが押されたか記録
-      this._scoreBox = { x: boxX, y: boxY, w: boxWidth, h: boxHeight };
-      this._scoreButtons = [
-        {
-          label: "↺",
-          x: btnRestartX,
-          y: btnY,
-          w: btnWidth,
-          h: btnHeight,
-          onClick: () => { this._lastScoreButton = "restart"; this.restart(); }
-        },
-        {
-          label: "HOME",
-          x: btnHomeX - btnWidth/2,
-          y: btnY,
-          w: btnWidth,
-          h: btnHeight,
-          onClick: () => { this._lastScoreButton = "home"; this.running = false; }
-        }
-      ];
-      if (this.state === "CLEAR!" && this.stageId < 3) {
-        this._scoreButtons.push({
-          label: "NEXT",
-          x: btnNextX - btnWidth,
-          y: btnY,
-          w: btnWidth,
-          h: btnHeight,
-          onClick: () => { if(this.state === "CLEAR!"){ this._lastScoreButton = "next"; this.running = false } }
-        });
+    this._lastScoreButton = null;
+    this._scoreBox = { x: boxX, y: boxY, w: Game.BOX_WIDTH, h: Game.BOX_HEIGHT };
+    this._scoreButtons = [
+      {
+        label: "↺",
+        x: btnRestartX,
+        y: btnY,
+        w: Game.BTN_WIDTH,
+        h: Game.BTN_HEIGHT,
+        onClick: () => { this._lastScoreButton = "restart"; this.restart(); }
+      },
+      {
+        label: "HOME",
+        x: btnHomeX - Game.BTN_WIDTH / 2,
+        y: btnY,
+        w: Game.BTN_WIDTH,
+        h: Game.BTN_HEIGHT,
+        onClick: () => { this._lastScoreButton = "home"; this.running = false; }
       }
+    ];
+
+    if (this.state === "CLEAR!" && this.stageId < Game.MAX_STAGE) {
+      this._scoreButtons.push({
+        label: "NEXT",
+        x: btnNextX - Game.BTN_WIDTH,
+        y: btnY,
+        w: Game.BTN_WIDTH,
+        h: Game.BTN_HEIGHT,
+        onClick: () => { if(this.state === "CLEAR!"){ this._lastScoreButton = "next"; this.running = false } }
+      });
+    }
   }
 
+  // === 描画 ===
   draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.WIDTH, this.HEIGHT);
 
+    // ゲームオブジェクト描画
     this.drawGrid();
     this.platforms.forEach(p => p.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY));
     this.functionPlatform.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
@@ -296,93 +326,118 @@ export class Game {
     this.goal.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
     this.player.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
 
-    // UI表示
+    // UI描画（ゲーム終了時）
     if (this.state !== "playing") {
-      // 背景を少し暗く
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
-      ctx.fillRect(0,0,this.WIDTH,this.HEIGHT);
-
-      // 中央ボックス（サイズ・位置調整）
-      ctx.fillStyle = "white";
-      ctx.fillRect(this._scoreBox.x, this._scoreBox.y, this._scoreBox.w, this._scoreBox.h);
-
-      // メッセージ表示（上部に余白を持たせる）
-      ctx.fillStyle = "black";
-      ctx.font = "40px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText(this.state, this.WIDTH/2, this._scoreBox.y + 28);
-
-      // スコア表示（CLEAR!のときのみ、メッセージの下に余白）
-      if (this.state === "CLEAR!") {
-        // コイン画像を取得枚数分表示
-        if (!Collectible.coinImage) {
-          Collectible.coinImage = new Image();
-          Collectible.coinImage.src = 'game/images/Coin.png';
-        }
-        
-        const coinSize = 60;
-        const coinMargin = 30; // コイン間のマージン
-        const totalCoins = this.collectibles.length;
-        const totalCoinWidth = totalCoins * coinSize + (totalCoins - 1) * coinMargin;
-        const startX = this.WIDTH / 2 - totalCoinWidth / 2;
-        const coinY = this._scoreBox.y + 120;
-        
-        if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
-          // 取得したコイン（カラー）
-          for (let i = 0; i < this.collectedCount; i++) {
-            const coinX = startX + i * (coinSize + coinMargin);
-            ctx.drawImage(
-              Collectible.coinImage,
-              coinX,
-              coinY - coinSize / 2,
-              coinSize,
-              coinSize
-            );
-          }
-          
-          // 取得していないコイン（グレースケール）
-          ctx.globalAlpha = 0.3;
-          for (let i = this.collectedCount; i < this.collectibles.length; i++) {
-            const coinX = startX + i * (coinSize + coinMargin);
-            ctx.drawImage(
-              Collectible.coinImage,
-              coinX,
-              coinY - coinSize / 2,
-              coinSize,
-              coinSize
-            );
-          }
-          ctx.globalAlpha = 1.0;
-        } else {
-          // 画像読み込み中はテキスト表示
-          ctx.font = "24px Arial";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-          ctx.fillStyle = "black";
-          ctx.fillText(`取得アイテム: ${this.collectedCount} / ${this.collectibles.length}`, this.WIDTH/2, coinY - 20);
-        }
-      }
-
-      // ボタン描画
-      ctx.font = "28px Arial";
-      ctx.fillStyle = "#4caf50";
-      this._scoreButtons.forEach(btn => {
-        if ((this.state === "GAME OVER" || this.stageId >= 3) && btn.label === "NEXT") return;
-        ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
-      });
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      this._scoreButtons.forEach(btn => {
-        ctx.fillText(btn.label, btn.x + btn.w/2, btn.y + btn.h/2);
-      });
-
-      // ボタンのクリック判定（canvasクリックイベントはmain.js等で管理推奨）
-      // 必要なら座標とラベルで判定可能
+      this.drawUI();
     }
   }
 
+  drawUI() {
+    const ctx = this.ctx;
+
+    // 背景を暗く
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+
+    // スコアボックス
+    this.drawScoreBox();
+
+    // メッセージ
+    this.drawStateMessage();
+
+    // スコア（CLEAR!時）
+    if (this.state === "CLEAR!") {
+      this.drawCoinDisplay();
+    }
+
+    // ボタン
+    this.drawButtons();
+  }
+
+  drawScoreBox() {
+    const ctx = this.ctx;
+    ctx.fillStyle = "white";
+    ctx.fillRect(this._scoreBox.x, this._scoreBox.y, this._scoreBox.w, this._scoreBox.h);
+  }
+
+  drawStateMessage() {
+    const ctx = this.ctx;
+    ctx.fillStyle = "black";
+    ctx.font = "40px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(this.state, this.WIDTH / 2, this._scoreBox.y + 28);
+  }
+
+  drawCoinDisplay() {
+    const ctx = this.ctx;
+    if (!Collectible.coinImage) {
+      Collectible.coinImage = new Image();
+      Collectible.coinImage.src = 'game/images/Coin.png';
+    }
+
+    const totalCoins = this.collectibles.length;
+    const totalCoinWidth = totalCoins * Game.COIN_SIZE + (totalCoins - 1) * Game.COIN_MARGIN;
+    const startX = this.WIDTH / 2 - totalCoinWidth / 2;
+    const coinY = this._scoreBox.y + 120;
+
+    if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
+      // 取得したコイン（カラー）
+      for (let i = 0; i < this.collectedCount; i++) {
+        const coinX = startX + i * (Game.COIN_SIZE + Game.COIN_MARGIN);
+        ctx.drawImage(
+          Collectible.coinImage,
+          coinX,
+          coinY - Game.COIN_SIZE / 2,
+          Game.COIN_SIZE,
+          Game.COIN_SIZE
+        );
+      }
+
+      // 未取得コイン（グレースケール）
+      ctx.globalAlpha = 0.3;
+      for (let i = this.collectedCount; i < totalCoins; i++) {
+        const coinX = startX + i * (Game.COIN_SIZE + Game.COIN_MARGIN);
+        ctx.drawImage(
+          Collectible.coinImage,
+          coinX,
+          coinY - Game.COIN_SIZE / 2,
+          Game.COIN_SIZE,
+          Game.COIN_SIZE
+        );
+      }
+      ctx.globalAlpha = 1.0;
+    } else {
+      // 画像読み込み中
+      ctx.font = "24px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "black";
+      ctx.fillText(`取得アイテム: ${this.collectedCount} / ${totalCoins}`, this.WIDTH / 2, coinY - 20);
+    }
+  }
+
+  drawButtons() {
+    const ctx = this.ctx;
+    ctx.font = "28px Arial";
+    ctx.fillStyle = "#4caf50";
+
+    // ボタン背景
+    this._scoreButtons.forEach(btn => {
+      if ((this.state === "GAME OVER" || this.stageId >= Game.MAX_STAGE) && btn.label === "NEXT") return;
+      ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
+    });
+
+    // ボタンテキスト
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    this._scoreButtons.forEach(btn => {
+      ctx.fillText(btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2);
+    });
+  }
+
+  // === ゲームループ ===
   loop() {
     this.update();
     this.draw();
@@ -390,17 +445,19 @@ export class Game {
       requestAnimationFrame(() => this.loop());
     } else {
       this.removeClickHandler();
-      // ボタン種別で分岐
-      if (this._lastScoreButton === "home") {
-        window.showHome();
-      } else if (this._lastScoreButton === "next") {
-        window.nextStage();
-      } else {
-        // それ以外（例: running=false だけの場合）
-        console.log("error");
-        window.showHome();
-      }
+      this.handleGameEnd();
       console.log("Game stopped");
+    }
+  }
+
+  handleGameEnd() {
+    if (this._lastScoreButton === "home") {
+      window.showHome();
+    } else if (this._lastScoreButton === "next") {
+      window.nextStage();
+    } else {
+      console.log("error");
+      window.showHome();
     }
   }
 }
