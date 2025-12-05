@@ -1,4 +1,34 @@
+// === ゲーム内オブジェクトの定義 ===
+
+// リソース管理クラス
+class ResourceManager {
+  static coinImage = null;
+  static hazardImage = null;
+  static goalImage = null;
+
+  static async loadImage(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  static getOrLoadImage(staticKey, src, obj) {
+    if (!obj[staticKey]) {
+      obj[staticKey] = new Image();
+      obj[staticKey].src = src;
+    }
+    return obj[staticKey];
+  }
+}
+
+// === Platform（プラットフォーム） ===
 export class Platform {
+  static get STROKE_COLOR() { return "blue"; }
+  static get LINE_WIDTH() { return 2; }
+
   constructor(type, options = {}) {
     this.type = type;
     if (type === "function") {
@@ -8,10 +38,10 @@ export class Platform {
 
   draw(ctx, originX, originY, scaleX, scaleY) {
     if (this.type === "function") {
-      ctx.strokeStyle = "blue";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = Platform.STROKE_COLOR;
+      ctx.lineWidth = Platform.LINE_WIDTH;
       ctx.beginPath();
-      for (let px = 0; px <= canvas.width; px++) {
+      for (let px = 0; px <= 800; px++) { // canvas.width = 800
         const x = (px - originX) / scaleX;
         const y = this.fn(x);
         const py = originY - y * scaleY;
@@ -23,152 +53,217 @@ export class Platform {
   }
 }
 
+// === Collectible（コレクティブル・コイン） ===
 export class Collectible {
-  constructor(x, y, size = 0.5) {
+  static get DEFAULT_SIZE() { return 0.5; }
+  static get FILL_COLOR() { return "orange"; }
+  static get IMAGE_PATH() { return 'game/images/Coin.png'; }
+
+  constructor(x, y, size = Collectible.DEFAULT_SIZE) {
     this.x = x;
     this.y = y;
     this.size = size;
     this.collected = false;
   }
 
+  static get coinImage() {
+    return ResourceManager.coinImage;
+  }
+
+  static set coinImage(img) {
+    ResourceManager.coinImage = img;
+  }
+
   draw(ctx, originX, originY, scaleX, scaleY) {
-    
     if (this.collected) return;
-    if (!Collectible.coinImage) {
-      Collectible.coinImage = new Image();
-      Collectible.coinImage.src = 'game/images/Coin.png'; // コイン画像のパス
-    }
-    if (Collectible.coinImage.complete) {
-      ctx.drawImage(
-        Collectible.coinImage,
-        originX + this.x * scaleX - (this.size * scaleX) / 2,
-        originY - this.y * scaleY - (this.size * scaleY) / 2,
-        this.size * scaleX,
-        this.size * scaleY
-      );
+
+    const img = ResourceManager.getOrLoadImage('coinImage', Collectible.IMAGE_PATH, ResourceManager);
+    const px = originX + this.x * scaleX - (this.size * scaleX) / 2;
+    const py = originY - this.y * scaleY - (this.size * scaleY) / 2;
+    const pw = this.size * scaleX;
+    const ph = this.size * scaleY;
+
+    if (img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, px, py, pw, ph);
     } else {
-      // 読み込み中は円で代用
-      ctx.fillStyle = "orange";
+      // フォールバック
+      ctx.fillStyle = Collectible.FILL_COLOR;
       ctx.beginPath();
-      ctx.arc(
-        originX + this.x * scaleX,
-        originY - this.y * scaleY,
-        (this.size * scaleX) / 2,
-        0,
-        2 * Math.PI
-      );
+      ctx.arc(originX + this.x * scaleX, originY - this.y * scaleY, pw / 2, 0, 2 * Math.PI);
       ctx.fill();
     }
   }
 
   check(player) {
     if (this.collected) return false;
-    const pxLeft = player.x - player.width/2;
-    const pxRight = player.x + player.width/2;
-    const pyBottom = player.y;
-    const pyTop = player.y + player.height;
 
-    const cxLeft = this.x - this.size/2;
-    const cxRight = this.x + this.size/2;
-    const cyBottom = this.y;
-    const cyTop = this.y + this.size;
+    const playerBounds = this.getPlayerBounds(player);
+    const collectibleBounds = this.getBounds();
 
-    const overlap = !(pxRight < cxLeft || pxLeft > cxRight || pyTop < cyBottom || pyBottom > cyTop);
+    const overlap = this.boundsIntersect(playerBounds, collectibleBounds);
     if (overlap) this.collected = true;
     return overlap;
   }
+
+  getPlayerBounds(player) {
+    return {
+      left: player.x - player.width / 2,
+      right: player.x + player.width / 2,
+      top: player.y + player.height,
+      bottom: player.y
+    };
+  }
+
+  getBounds() {
+    return {
+      left: this.x - this.size / 2,
+      right: this.x + this.size / 2,
+      top: this.y + this.size,
+      bottom: this.y
+    };
+  }
+
+  boundsIntersect(a, b) {
+    return !(a.right < b.left || a.left > b.right || a.top < b.bottom || a.bottom > b.top);
+  }
 }
 
+// === Hazard（ハザード） ===
 export class Hazard {
-  constructor(x, y, width = 1, height = 1) {
+  static get FILL_COLOR() { return "red"; }
+  static get IMAGE_PATH() { return 'game/images/Hazard.png'; }
+  static get DEFAULT_WIDTH() { return 1; }
+  static get DEFAULT_HEIGHT() { return 1; }
+
+  constructor(x, y, width = Hazard.DEFAULT_WIDTH, height = Hazard.DEFAULT_HEIGHT) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
   }
 
+  static get hazardImage() {
+    return ResourceManager.hazardImage;
+  }
+
+  static set hazardImage(img) {
+    ResourceManager.hazardImage = img;
+  }
+
   draw(ctx, originX, originY, scaleX, scaleY) {
-    if (!Hazard.hazardImage) {
-      Hazard.hazardImage = new Image();
-      Hazard.hazardImage.src = 'game/images/Hazard.png';
-    }
-    if (Hazard.hazardImage.complete && Hazard.hazardImage.naturalWidth > 0) {
-      ctx.drawImage(
-        Hazard.hazardImage,
-        originX + this.x * scaleX - (this.width * scaleX) / 2,
-        originY - this.y * scaleY - (this.height * scaleY) / 2,
-        this.width * scaleX,
-        this.height * scaleY
-      );
+    const img = ResourceManager.getOrLoadImage('hazardImage', Hazard.IMAGE_PATH, ResourceManager);
+    const px = originX + this.x * scaleX - (this.width * scaleX) / 2;
+    const py = originY - this.y * scaleY - (this.height * scaleY) / 2;
+    const pw = this.width * scaleX;
+    const ph = this.height * scaleY;
+
+    if (img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, px, py, pw, ph);
     } else {
-      // 読み込み中は赤い四角で描画
-      ctx.fillStyle = "red";
-      ctx.fillRect(
-        originX + this.x * scaleX - (this.width * scaleX) / 2,
-        originY - this.y * scaleY - (this.height * scaleY) / 2,
-        this.width * scaleX,
-        this.height * scaleY
-      );
+      // フォールバック
+      ctx.fillStyle = Hazard.FILL_COLOR;
+      ctx.fillRect(px, py, pw, ph);
     }
   }
 
   check(player) {
-    // プレイヤーと矩形の当たり判定
-    const px = player.x, py = player.y;
+    return this.boundsIntersect(
+      this.getPlayerBounds(player),
+      this.getBounds()
+    );
+  }
+
+  getPlayerBounds(player) {
+    return {
+      left: player.x - player.width / 2,
+      right: player.x + player.width / 2,
+      top: player.y + player.height,
+      bottom: player.y
+    };
+  }
+
+  getBounds() {
+    return {
+      left: this.x - this.width / 2,
+      right: this.x + this.width / 2,
+      top: this.y + this.height,
+      bottom: this.y
+    };
+  }
+
+  boundsIntersect(a, b) {
     return (
-      px + player.width / 2 > this.x - this.width / 2 &&
-      px - player.width / 2 < this.x + this.width / 2 &&
-      py + player.height > this.y &&
-      py < this.y + this.height
+      a.right > b.left &&
+      a.left < b.right &&
+      a.top > b.bottom &&
+      a.bottom < b.top
     );
   }
 }
 
+// === Goal（ゴール） ===
 export class Goal {
-  constructor(x, y, size = 1.0) {
+  static get DEFAULT_SIZE() { return 1.0; }
+  static get FILL_COLOR() { return "#cc3"; }
+  static get IMAGE_PATH() { return 'game/images/Flag.png'; }
+
+  constructor(x, y, size = Goal.DEFAULT_SIZE) {
     this.x = x;
     this.y = y;
     this.width = size;
     this.height = size;
   }
 
+  static get goalImage() {
+    return ResourceManager.goalImage;
+  }
+
+  static set goalImage(img) {
+    ResourceManager.goalImage = img;
+  }
+
   draw(ctx, originX, originY, scaleX, scaleY) {
-    if (!Goal.goalImage) {
-      Goal.goalImage = new Image();
-      Goal.goalImage.src = 'game/images/Flag.png';
-    }
-    if (Goal.goalImage.complete && Goal.goalImage.naturalWidth > 0) {
-      ctx.drawImage(
-        Goal.goalImage,
-        originX + (this.x - this.width / 2) * scaleX,
-        originY - this.y * scaleY - this.height * scaleY,
-        this.width * scaleX,
-        this.height * scaleY
-      );
+    const img = ResourceManager.getOrLoadImage('goalImage', Goal.IMAGE_PATH, ResourceManager);
+    const px = originX + (this.x - this.width / 2) * scaleX;
+    const py = originY - this.y * scaleY - this.height * scaleY;
+    const pw = this.width * scaleX;
+    const ph = this.height * scaleY;
+
+    if (img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, px, py, pw, ph);
     } else {
-      // 読み込み中は従来の色で描画
-      ctx.fillStyle = "#cc3";
-      ctx.fillRect(
-        originX + (this.x - this.width / 2) * scaleX,
-        originY - this.y * scaleY - this.height * scaleY,
-        this.width * scaleX,
-        this.height * scaleY
-      );
+      // フォールバック
+      ctx.fillStyle = Goal.FILL_COLOR;
+      ctx.fillRect(px, py, pw, ph);
     }
   }
 
   check(player) {
-    const pxLeft = player.x - player.width / 2;
-    const pxRight = player.x + player.width / 2;
-    const pyBottom = player.y;
-    const pyTop = player.y + player.height;
+    return this.boundsIntersect(
+      this.getPlayerBounds(player),
+      this.getBounds()
+    );
+  }
 
-    const gxLeft = this.x - this.width / 2;
-    const gxRight = this.x + this.width / 2;
-    const gyBottom = this.y;
-    const gyTop = this.y + this.height;
+  getPlayerBounds(player) {
+    return {
+      left: player.x - player.width / 2,
+      right: player.x + player.width / 2,
+      top: player.y + player.height,
+      bottom: player.y
+    };
+  }
 
-    return !(pxRight < gxLeft || pxLeft > gxRight || pyTop < gyBottom || pyBottom > gyTop);
+  getBounds() {
+    return {
+      left: this.x - this.width / 2,
+      right: this.x + this.width / 2,
+      top: this.y + this.height,
+      bottom: this.y
+    };
+  }
+
+  boundsIntersect(a, b) {
+    return !(a.right < b.left || a.left > b.right || a.top < b.bottom || a.bottom > b.top);
   }
 }
-
