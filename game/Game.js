@@ -284,6 +284,7 @@ export class Game {
     this._scoreButtons = [
       {
         label: "↺",
+        icon: "fa-redo",
         x: btnRestartX,
         y: btnY,
         w: Game.BTN_WIDTH,
@@ -292,6 +293,7 @@ export class Game {
       },
       {
         label: "HOME",
+        icon: "fa-home",
         x: btnHomeX - Game.BTN_WIDTH / 2,
         y: btnY,
         w: Game.BTN_WIDTH,
@@ -303,6 +305,7 @@ export class Game {
     if (this.state === "CLEAR!" && this.stageId < Game.MAX_STAGE) {
       this._scoreButtons.push({
         label: "NEXT",
+        icon: "fa-arrow-right",
         x: btnNextX - Game.BTN_WIDTH,
         y: btnY,
         w: Game.BTN_WIDTH,
@@ -428,13 +431,32 @@ export class Game {
       ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
     });
 
-    // ボタンテキスト
+    // ボタンアイコン表示
+    this._scoreButtons.forEach(btn => {
+      if ((this.state === "GAME OVER" || this.stageId >= Game.MAX_STAGE) && btn.label === "NEXT") return;
+      
+      // アイコン用HTML要素を作成（キャンバス上に重ねて表示）
+      this.drawCanvasIcon(ctx, btn);
+    });
+  }
+
+  drawCanvasIcon(ctx, btn) {
+    // キャンバス上にFontAwesomeアイコンを疑似表示するため、テキストベースで代替
+    // 実際のアイコン表示は、オーバーレイHTMLで実装するのが最適
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    this._scoreButtons.forEach(btn => {
-      ctx.fillText(btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2);
-    });
+    ctx.font = "24px Arial";
+    
+    // アイコン記号として使用（テキストフォールバック）
+    const iconSymbols = {
+      'fa-redo': '↺',
+      'fa-home': '⌂',
+      'fa-arrow-right': '→'
+    };
+    
+    const symbol = iconSymbols[btn.icon] || btn.label;
+    ctx.fillText(symbol, btn.x + btn.w / 2, btn.y + btn.h / 2);
   }
 
   // === ゲームループ ===

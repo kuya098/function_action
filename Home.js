@@ -1,48 +1,119 @@
 // ホーム画面の描画・UI管理
+// FontAwesomeアイコンを使ったUI実装
+
 export function drawHome(ctx, canvas, onStageSelect) {
+  // キャンバス描画をクリア
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = '32px sans-serif';
-  ctx.fillStyle = 'black';
-  ctx.textAlign = 'center';
-  ctx.fillText('関数アクションゲーム', canvas.width / 2, 80);
+
+  // キャンバスを非表示にしてHTMLベースUIを表示
+  canvas.style.display = 'none';
+
+  // 既存のホーム画面コンテナを削除
+  let homeContainer = document.getElementById('home-container');
+  if (homeContainer) homeContainer.remove();
+
+  // ホーム画面コンテナを作成
+  homeContainer = document.createElement('div');
+  homeContainer.id = 'home-container';
+  homeContainer.style.cssText = `
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  `;
+
+  // タイトル
+  const title = document.createElement('h1');
+  title.style.cssText = `
+    text-align: center;
+    color: #333;
+    margin-bottom: 40px;
+    font-size: 2.5em;
+  `;
+  title.textContent = '関数アクションゲーム';
+  homeContainer.appendChild(title);
+
+  // ステージボタンコンテナ
+  const stagesContainer = document.createElement('div');
+  stagesContainer.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  `;
 
   const stages = [
-    { id: 1, name: 'ステージ1' },
-    { id: 2, name: 'ステージ2' },
-    { id: 3, name: 'ステージ3' }
+    { id: 1, name: '初級', icon: 'fa-flag' },
+    { id: 2, name: '中級', icon: 'fa-star' },
+    { id: 3, name: '上級', icon: 'fa-crown' }
   ];
-  const buttonWidth = 200;
-  const buttonHeight = 50;
-  const buttonYStart = 150;
-  const buttonGap = 20;
-  const buttons = [];
 
-  stages.forEach((stage, i) => {
-    const x = (canvas.width - buttonWidth) / 2;
-    const y = buttonYStart + i * (buttonHeight + buttonGap);
-    ctx.fillStyle = '#4caf50';
-    ctx.fillRect(x, y, buttonWidth, buttonHeight);
-    ctx.font = '24px sans-serif';
-    ctx.fillStyle = 'white';
-    ctx.fillText(stage.name, canvas.width / 2, y + 32);
-    buttons.push({ x, y, w: buttonWidth, h: buttonHeight, stage });
+  stages.forEach(stage => {
+    const button = document.createElement('button');
+    button.style.cssText = `
+      padding: 20px;
+      background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    `;
+
+    button.onmouseover = () => {
+      button.style.transform = 'translateY(-3px)';
+      button.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+    };
+    button.onmouseout = () => {
+      button.style.transform = 'translateY(0)';
+      button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    };
+
+    // アイコン + テキスト
+    const icon = document.createElement('i');
+    icon.className = `fas ${stage.icon}`;
+    icon.style.fontSize = '24px';
+
+    const label = document.createElement('span');
+    label.textContent = stage.name;
+
+    button.appendChild(icon);
+    button.appendChild(label);
+
+    button.onclick = () => {
+      cleanup();
+      onStageSelect(stage.id);
+    };
+
+    stagesContainer.appendChild(button);
   });
 
-  // クリック判定
-  function handleClick(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    buttons.forEach(btn => {
-      if (
-        mx >= btn.x && mx <= btn.x + btn.w &&
-        my >= btn.y && my <= btn.y + btn.h
-      ) {
-        onStageSelect(btn.stage.id);
-      }
-    });
+  homeContainer.appendChild(stagesContainer);
+
+  // 入力欄を隠す
+  const input = document.getElementById('expr');
+  if (input) input.style.display = 'none';
+  const drawBtn = document.getElementById('drawBtn');
+  if (drawBtn) drawBtn.style.display = 'none';
+
+  // DOMに追加
+  document.body.appendChild(homeContainer);
+
+  // クリーンアップ関数
+  function cleanup() {
+    if (homeContainer) homeContainer.remove();
+    canvas.style.display = 'block';
+    if (input) input.style.display = 'block';
+    if (drawBtn) drawBtn.style.display = 'block';
   }
-  canvas.addEventListener('click', handleClick);
-  // イベント解除用に返す
-  return () => canvas.removeEventListener('click', handleClick);
+
+  return cleanup;
 }
