@@ -318,7 +318,6 @@ export class Game {
       display: flex;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
       z-index: 1000;
     `;
 
@@ -331,7 +330,6 @@ export class Game {
       text-align: center;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3);
       min-width: 400px;
-      pointer-events: auto;
     `;
 
     // ステータスメッセージ
