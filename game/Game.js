@@ -241,6 +241,8 @@ export class Game {
     this.functionPlatform.fn = x => 0;
     const input = document.getElementById('expr');
     if (input) input.value = '0';
+    // BGM再生
+    soundManager.playBGM('gameBGM');
   }
 
   // === ゲームロジック更新 ===
