@@ -292,13 +292,13 @@ export class Game {
 
   drawUI() {
     const ctx = this.ctx;
-
     // 背景を暗く
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
-
-    // HTMLベースのUIを表示
-    this.showScoreScreenUI();
+    // スコア画面UIが既に表示されていれば再生成しない
+    if (!document.getElementById('score-screen-ui')) {
+      this.showScoreScreenUI();
+    }
   }
 
   showScoreScreenUI() {
