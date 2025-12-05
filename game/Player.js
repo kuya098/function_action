@@ -6,7 +6,6 @@ export class Player {
     this.height = height;
     this.velocity = { x: 0, y: 0 };
     this.history = [];
-    this.cornerRadius = Math.min(width, height) * 0.28; // 描画時と同じ角丸半径
   }
 
   update(keys, groundFunc) {
@@ -129,30 +128,15 @@ export class Player {
     let maxGroundY = null;
     let contact = false;
     
-    // プレイヤーの有効高さ（角丸を考慮）
-    const effectiveYMin = yMin + this.cornerRadius;
+    // 簡易版：角丸矩形を考慮しながら、当たり判定を矩形のまま使用
+    // 角丸による縮小を適用（下部の角丸を考慮して有効な下端を上げる）
+    const cornerRadius = Math.min(this.width, this.height) * 0.28;
+    const effectiveYMin = yMin + cornerRadius * 0.5; // 角丸を考慮した有効下端
     
     for (let x = xMin; x <= xMax; x += SAMPLES_INTERVAL) {
       const groundY = fn(x);
-      
-      // x座標に応じた有効なyMin を計算（角丸を考慮）
-      let currentYMin = effectiveYMin;
-      
-      // 左右の角丸部分を考慮
-      if (x < xMin + this.cornerRadius) {
-        // 左角丸: 円弧の式を使用
-        const dx = x - (xMin + this.cornerRadius);
-        const dy = Math.sqrt(Math.max(0, this.cornerRadius * this.cornerRadius - dx * dx));
-        currentYMin = yMin + this.cornerRadius - dy;
-      } else if (x > xMax - this.cornerRadius) {
-        // 右角丸: 円弧の式を使用
-        const dx = x - (xMax - this.cornerRadius);
-        const dy = Math.sqrt(Math.max(0, this.cornerRadius * this.cornerRadius - dx * dx));
-        currentYMin = yMin + this.cornerRadius - dy;
-      }
-      
       // サンプル点がプレイヤーと接触しているか
-      if (groundY >= currentYMin && groundY <= yMax) {
+      if (groundY >= effectiveYMin && groundY <= yMax) {
         contact = true;
         if (maxGroundY === null || groundY > maxGroundY) {
           maxGroundY = groundY;
