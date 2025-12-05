@@ -31,6 +31,7 @@ export class Game {
     this.fnText = "0";
     this.inputText = ""; // 入力エリアのテキスト
     this.inputLatex = ""; // LaTeX変換後のテキスト
+    this.inputCursorPos = 0; // カーソル位置
 
     this.stageId = stageId;
     const stage = stageData[String(this.stageId)];
@@ -69,18 +70,40 @@ export class Game {
     document.addEventListener("keydown", e => {
       // 入力エリアがフォーカスされている場合のテキスト入力
       if (this.inputFocused) {
-        if (e.key === "Backspace") {
+        if (e.key === "ArrowLeft") {
           e.preventDefault();
-          this.inputText = this.inputText.slice(0, -1);
-          this.updateLatex();
+          this.inputCursorPos = Math.max(0, this.inputCursorPos - 1);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          this.inputCursorPos = Math.min(this.inputText.length, this.inputCursorPos + 1);
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          this.inputCursorPos = 0;
+        } else if (e.key === "End") {
+          e.preventDefault();
+          this.inputCursorPos = this.inputText.length;
+        } else if (e.key === "Backspace") {
+          e.preventDefault();
+          if (this.inputCursorPos > 0) {
+            this.inputText = this.inputText.slice(0, this.inputCursorPos - 1) + this.inputText.slice(this.inputCursorPos);
+            this.inputCursorPos--;
+            this.updateLatex();
+          }
+        } else if (e.key === "Delete") {
+          e.preventDefault();
+          if (this.inputCursorPos < this.inputText.length) {
+            this.inputText = this.inputText.slice(0, this.inputCursorPos) + this.inputText.slice(this.inputCursorPos + 1);
+            this.updateLatex();
+          }
         } else if (e.key === "Enter") {
           e.preventDefault();
           // Enterで関数をセット
           this.setFunction(this.inputText);
           this.inputFocused = false;
-        } else if (e.key.length === 1) {
-          // 通常の文字入力
-          this.inputText += e.key;
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+          // 通常の文字入力（カーソル位置に挿入）
+          this.inputText = this.inputText.slice(0, this.inputCursorPos) + e.key + this.inputText.slice(this.inputCursorPos);
+          this.inputCursorPos++;
           this.updateLatex();
         }
         return;
@@ -200,6 +223,8 @@ export class Game {
       if (my >= this.playHeight && my <= this.HEIGHT) {
         this.inputFocused = true;
         this.inputCursorVisible = true;
+        // クリック位置に応じてカーソル位置を設定（簡易版：末尾に移動）
+        this.inputCursorPos = this.inputText.length;
         return;
       } else {
         this.inputFocused = false;
@@ -378,14 +403,38 @@ export class Game {
       ctx.strokeStyle = "black";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      let textWidth = 0;
-      if (this._latexContainer && this.inputLatex) {
-        textWidth = this._latexContainer.offsetWidth;
+      let cursorX = 10;
+      
+      // カーソル位置までのテキスト幅を計算
+      if (this.inputLatex) {
+        // LaTeX表示の場合: 一時的な隠し要素で計測
+        if (!this._cursorMeasureContainer) {
+          this._cursorMeasureContainer = document.createElement('div');
+          this._cursorMeasureContainer.style.position = 'absolute';
+          this._cursorMeasureContainer.style.visibility = 'hidden';
+          this._cursorMeasureContainer.style.fontSize = '20px';
+          document.body.appendChild(this._cursorMeasureContainer);
+        }
+        // カーソル位置までの部分文字列をLaTeX変換
+        try {
+          const textBeforeCursor = this.inputText.slice(0, this.inputCursorPos);
+          if (textBeforeCursor) {
+            const nodeBeforeCursor = math.parse(textBeforeCursor);
+            const latexBeforeCursor = nodeBeforeCursor.toTex();
+            katex.render(latexBeforeCursor, this._cursorMeasureContainer, { throwOnError: false });
+            cursorX += this._cursorMeasureContainer.offsetWidth;
+          }
+        } catch (e) {
+          // パースエラー時は通常テキストで計測
+          ctx.font = "20px Arial";
+          cursorX += ctx.measureText(this.inputText.slice(0, this.inputCursorPos)).width;
+        }
       } else {
+        // 通常テキストの場合
         ctx.font = "20px Arial";
-        textWidth = ctx.measureText(this.inputText).width;
+        cursorX += ctx.measureText(this.inputText.slice(0, this.inputCursorPos)).width;
       }
-      const cursorX = 10 + textWidth;
+      
       const cursorY = this.playHeight + 10;
       ctx.moveTo(cursorX, cursorY);
       ctx.lineTo(cursorX, cursorY + this.inputAreaHeight - 20);
