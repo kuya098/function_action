@@ -30,6 +30,7 @@ export class Game {
     this.functionPlatform = new Platform("function", { fn: x => 0 });
     this.fnText = "0";
     this.inputText = ""; // 入力エリアのテキスト
+    this.inputLatex = ""; // LaTeX変換後のテキスト
 
     this.stageId = stageId;
     const stage = stageData[String(this.stageId)];
@@ -71,6 +72,7 @@ export class Game {
         if (e.key === "Backspace") {
           e.preventDefault();
           this.inputText = this.inputText.slice(0, -1);
+          this.updateLatex();
         } else if (e.key === "Enter") {
           e.preventDefault();
           // Enterで関数をセット
@@ -79,6 +81,7 @@ export class Game {
         } else if (e.key.length === 1) {
           // 通常の文字入力
           this.inputText += e.key;
+          this.updateLatex();
         }
         return;
       }
@@ -93,6 +96,16 @@ export class Game {
       if (e.code === "ArrowRight") this.keys.right = false;
       if (e.code === "ArrowUp") this.keys.up = false;
     });
+  }
+
+  updateLatex() {
+    try {
+      const node = math.parse(this.inputText);
+      this.inputLatex = node.toTex();
+    } catch (e) {
+      // パースエラー時はそのまま表示
+      this.inputLatex = "";
+    }
   }
 
   setFunction(expr) {
@@ -324,22 +337,55 @@ export class Game {
     ctx.lineWidth = 1;
     ctx.strokeRect(0, this.playHeight, this.WIDTH, this.inputAreaHeight);
 
-    // 入力テキストの描画
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    const textX = 10;
-    const textY = this.playHeight + this.inputAreaHeight / 2;
-    ctx.fillText(this.inputText, textX, textY);
+    // 入力テキストのLaTeX描画
+    if (this.inputLatex) {
+      // DOM要素を使ってKaTeXレンダリング
+      if (!this._latexContainer) {
+        this._latexContainer = document.createElement('div');
+        this._latexContainer.style.position = 'absolute';
+        this._latexContainer.style.pointerEvents = 'none';
+        document.body.appendChild(this._latexContainer);
+      }
+      const rect = this.canvas.getBoundingClientRect();
+      this._latexContainer.style.left = (rect.left + 10) + 'px';
+      this._latexContainer.style.top = (rect.top + this.playHeight + 5) + 'px';
+      this._latexContainer.style.fontSize = '20px';
+      try {
+        katex.render(this.inputLatex, this._latexContainer, { throwOnError: false });
+      } catch (e) {
+        this._latexContainer.textContent = this.inputText;
+      }
+    } else if (this.inputText) {
+      // LaTeX変換できない場合は通常テキスト
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      const textX = 10;
+      const textY = this.playHeight + this.inputAreaHeight / 2;
+      ctx.fillText(this.inputText, textX, textY);
+      if (this._latexContainer) {
+        this._latexContainer.textContent = '';
+      }
+    } else {
+      if (this._latexContainer) {
+        this._latexContainer.textContent = '';
+      }
+    }
 
     // 入力欄のカーソル描画（フォーカス時に点滅）
     if (this.inputFocused && this.inputCursorVisible) {
       ctx.strokeStyle = "black";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      const textWidth = ctx.measureText(this.inputText).width;
-      const cursorX = textX + textWidth;
+      let textWidth = 0;
+      if (this._latexContainer && this.inputLatex) {
+        textWidth = this._latexContainer.offsetWidth;
+      } else {
+        ctx.font = "20px Arial";
+        textWidth = ctx.measureText(this.inputText).width;
+      }
+      const cursorX = 10 + textWidth;
       const cursorY = this.playHeight + 10;
       ctx.moveTo(cursorX, cursorY);
       ctx.lineTo(cursorX, cursorY + this.inputAreaHeight - 20);
