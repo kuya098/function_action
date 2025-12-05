@@ -2,6 +2,10 @@
 // FontAwesomeアイコンを使ったUI実装
 
 export function drawHome(ctx, canvas, onStageSelect) {
+  // クリア画面UIが残っていたら削除
+  const scoreScreenUI = document.getElementById('score-screen-ui');
+  if (scoreScreenUI) scoreScreenUI.remove();
+
   // キャンバス描画をクリア
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
