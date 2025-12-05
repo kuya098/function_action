@@ -22,9 +22,7 @@ export class SoundManager {
 
     for (const [key, path] of Object.entries(soundFiles)) {
       this.sounds[key] = new Audio(path);
-      if (key === 'coin') {
-        this.sounds[key].volume = 1.0;
-      } else if (key.includes('BGM')) {
+      if (key.includes('BGM')) {
         this.sounds[key].loop = true;
         this.sounds[key].volume = this.bgmVolume;
       } else {
@@ -37,8 +35,7 @@ export class SoundManager {
     if (this.sounds[name]) {
       // 同じ音を重ねて再生できるようにクローンを作成
       const sound = this.sounds[name].cloneNode();
-      // coin は常に最大音量、他はseVolumeに従う
-      sound.volume = (name === 'coin') ? 1.0 : this.seVolume;
+      sound.volume = this.seVolume;
       sound.play().catch(e => console.log('SE play error:', e));
     }
   }
