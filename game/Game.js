@@ -116,6 +116,7 @@ export class Game {
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           this.setFunction(input.value);
+          input.blur(); // focusを外す
         }
       });
       input.addEventListener('input', () => {
