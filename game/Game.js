@@ -483,7 +483,7 @@ export class Game {
     buttonArea.appendChild(restartBtn);
 
     // ホームボタン
-    const homeBtn = this.createIconButton('⌂ ホーム', '#4caf50', () => {
+    const homeBtn = this.createIconButton('<i class="fas fa-home"></i> ホーム', '#4caf50', () => {
       console.log('homeBtn clicked');
       this.cleanup();
       this._lastScoreButton = "home";
