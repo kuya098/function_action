@@ -53,6 +53,9 @@ export class Game {
     this.running = true;
     this.state = "playing";
 
+    // 関数更新アニメーション用
+    this.functionUpdateAnimation = null;
+
     this.initInput();
     this.initClickHandler();
     this.initInputField();
@@ -153,6 +156,9 @@ export class Game {
       const input = document.getElementById('expr');
       if (input) input.value = expr;
       soundManager.playSE('make_func');
+      
+      // 関数更新アニメーションを開始
+      this.startFunctionUpdateAnimation();
     } catch (e) {
       const input = document.getElementById('expr');
       if (input) input.value = this.fnText;
@@ -356,10 +362,82 @@ export class Game {
     this.goal.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
     this.player.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
 
+    // 関数更新アニメーション描画
+    if (this.functionUpdateAnimation) {
+      this.drawFunctionUpdateAnimation(ctx);
+    }
+
     // UI描画（ゲーム終了時）
     if (this.state !== "playing") {
       this.drawUI();
     }
+  }
+
+  // === 関数更新アニメーション ===
+  startFunctionUpdateAnimation() {
+    this.functionUpdateAnimation = {
+      startTime: Date.now(),
+      duration: 800 // 0.8秒
+    };
+  }
+
+  drawFunctionUpdateAnimation(ctx) {
+    const anim = this.functionUpdateAnimation;
+    const elapsed = Date.now() - anim.startTime;
+    const progress = Math.min(elapsed / anim.duration, 1);
+
+    // アニメーション終了判定
+    if (progress >= 1) {
+      this.functionUpdateAnimation = null;
+      return;
+    }
+
+    // 関数曲線上を光が走る
+    const startX = 0;
+    const endX = 12;
+    const currentX = startX + (endX - startX) * progress;
+
+    // 光の範囲（前後に少し広げる）
+    const lightRange = 1.5;
+    
+    ctx.save();
+    ctx.lineWidth = 4;
+
+    // 光のグラデーション効果
+    for (let x = Math.max(startX, currentX - lightRange); x <= Math.min(endX, currentX + lightRange); x += 0.05) {
+      try {
+        const y = this.functionPlatform.fn(x);
+        if (!isFinite(y)) continue;
+
+        const px = this.originX + x * this.scaleX;
+        const py = this.originY - y * this.scaleY;
+
+        // 距離に応じた明るさ
+        const dist = Math.abs(x - currentX);
+        const intensity = Math.max(0, 1 - (dist / lightRange));
+        
+        // 虹色グラデーション
+        const hue = (progress * 360 + x * 30) % 360;
+        const alpha = intensity * 0.8;
+
+        ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(px, py, 6 * intensity, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 中心の明るい点
+        if (intensity > 0.7) {
+          ctx.fillStyle = `hsla(${hue}, 100%, 90%, ${intensity})`;
+          ctx.beginPath();
+          ctx.arc(px, py, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } catch (e) {
+        // 関数評価エラーは無視
+      }
+    }
+
+    ctx.restore();
   }
 
   drawUI() {
