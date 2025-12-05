@@ -322,17 +322,19 @@ export class Game {
         }
         
         const coinSize = 40;
-        const coinSpacing = 50;
-        const totalCoinWidth = this.collectedCount * coinSpacing - (coinSpacing - coinSize);
+        const coinMargin = 5; // コイン間のマージン
+        const totalCoins = this.collectibles.length;
+        const totalCoinWidth = totalCoins * coinSize + (totalCoins - 1) * coinMargin;
         const startX = this.WIDTH / 2 - totalCoinWidth / 2;
         const coinY = this._scoreBox.y + 90;
         
         if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
           // 取得したコイン（カラー）
           for (let i = 0; i < this.collectedCount; i++) {
+            const coinX = startX + i * (coinSize + coinMargin);
             ctx.drawImage(
               Collectible.coinImage,
-              startX + i * coinSpacing - coinSize / 2,
+              coinX,
               coinY - coinSize / 2,
               coinSize,
               coinSize
@@ -342,9 +344,10 @@ export class Game {
           // 取得していないコイン（グレースケール）
           ctx.globalAlpha = 0.3;
           for (let i = this.collectedCount; i < this.collectibles.length; i++) {
+            const coinX = startX + i * (coinSize + coinMargin);
             ctx.drawImage(
               Collectible.coinImage,
-              startX + i * coinSpacing - coinSize / 2,
+              coinX,
               coinY - coinSize / 2,
               coinSize,
               coinSize
