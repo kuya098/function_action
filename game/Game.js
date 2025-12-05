@@ -245,7 +245,6 @@ export class Game {
     this.player.update(this.keys, this.functionPlatform.fn);
     this.checkGameState();
     this.checkCollisions();
-    this.prepareScoreUI();
   }
 
   checkGameState() {
@@ -269,50 +268,6 @@ export class Game {
     this.collectibles.forEach(c => {
       if (c.check(this.player)) this.collectedCount++;
     });
-  }
-
-  prepareScoreUI() {
-    const boxX = this.WIDTH / 2 - Game.BOX_WIDTH / 2;
-    const boxY = this.HEIGHT / 2 - Game.BOX_HEIGHT / 2;
-    const btnHomeX = this.WIDTH / 2;
-    const btnRestartX = btnHomeX - Game.BTN_WIDTH - Game.BTN_GAP;
-    const btnNextX = btnHomeX + Game.BTN_WIDTH + Game.BTN_GAP;
-    const btnY = boxY + Game.BOX_HEIGHT - Game.BTN_HEIGHT - Game.BTN_MARGIN;
-
-    this._lastScoreButton = null;
-    this._scoreBox = { x: boxX, y: boxY, w: Game.BOX_WIDTH, h: Game.BOX_HEIGHT };
-    this._scoreButtons = [
-      {
-        label: "↺",
-        icon: "fa-redo",
-        x: btnRestartX,
-        y: btnY,
-        w: Game.BTN_WIDTH,
-        h: Game.BTN_HEIGHT,
-        onClick: () => { this._lastScoreButton = "restart"; this.restart(); }
-      },
-      {
-        label: "HOME",
-        icon: "fa-home",
-        x: btnHomeX - Game.BTN_WIDTH / 2,
-        y: btnY,
-        w: Game.BTN_WIDTH,
-        h: Game.BTN_HEIGHT,
-        onClick: () => { this._lastScoreButton = "home"; this.running = false; }
-      }
-    ];
-
-    if (this.state === "CLEAR!" && this.stageId < Game.MAX_STAGE) {
-      this._scoreButtons.push({
-        label: "NEXT",
-        icon: "fa-arrow-right",
-        x: btnNextX - Game.BTN_WIDTH,
-        y: btnY,
-        w: Game.BTN_WIDTH,
-        h: Game.BTN_HEIGHT,
-        onClick: () => { if(this.state === "CLEAR!"){ this._lastScoreButton = "next"; this.running = false } }
-      });
-    }
   }
 
   // === 描画 ===
@@ -342,121 +297,205 @@ export class Game {
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
 
+    // HTMLベースのUIを表示
+    this.showScoreScreenUI();
+  }
+
+  showScoreScreenUI() {
+    // 既存のスコア画面UIを削除
+    let scoreScreenUI = document.getElementById('score-screen-ui');
+    if (scoreScreenUI) scoreScreenUI.remove();
+
+    // スコア画面コンテナを作成
+    scoreScreenUI = document.createElement('div');
+    scoreScreenUI.id = 'score-screen-ui';
+    scoreScreenUI.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 1000;
+    `;
+
     // スコアボックス
-    this.drawScoreBox();
+    const scoreBox = document.createElement('div');
+    scoreBox.style.cssText = `
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      min-width: 400px;
+      pointer-events: auto;
+    `;
 
-    // メッセージ
-    this.drawStateMessage();
+    // ステータスメッセージ
+    const statusDiv = document.createElement('div');
+    statusDiv.style.cssText = `
+      margin-bottom: 30px;
+    `;
 
-    // スコア（CLEAR!時）
+    const statusText = document.createElement('h2');
+    statusText.style.cssText = `
+      margin: 0;
+      font-size: 3em;
+      color: ${this.state === 'CLEAR!' ? '#4caf50' : '#f44336'};
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    `;
+    statusText.textContent = this.state;
+    statusDiv.appendChild(statusText);
+
+    scoreBox.appendChild(statusDiv);
+
+    // スコア表示（CLEAR!時）
     if (this.state === "CLEAR!") {
-      this.drawCoinDisplay();
-    }
+      const scoreDiv = document.createElement('div');
+      scoreDiv.style.cssText = `
+        margin-bottom: 30px;
+      `;
 
-    // ボタン
-    this.drawButtons();
-  }
+      const scoreLabel = document.createElement('p');
+      scoreLabel.style.cssText = `
+        margin: 0 0 15px 0;
+        font-size: 1.2em;
+        color: #666;
+      `;
+      scoreLabel.textContent = '獲得アイテム';
+      scoreDiv.appendChild(scoreLabel);
 
-  drawScoreBox() {
-    const ctx = this.ctx;
-    ctx.fillStyle = "white";
-    ctx.fillRect(this._scoreBox.x, this._scoreBox.y, this._scoreBox.w, this._scoreBox.h);
-  }
+      // コイン表示
+      const coinContainer = document.createElement('div');
+      coinContainer.style.cssText = `
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      `;
 
-  drawStateMessage() {
-    const ctx = this.ctx;
-    ctx.fillStyle = "black";
-    ctx.font = "40px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText(this.state, this.WIDTH / 2, this._scoreBox.y + 28);
-  }
-
-  drawCoinDisplay() {
-    const ctx = this.ctx;
-    if (!Collectible.coinImage) {
-      Collectible.coinImage = new Image();
-      Collectible.coinImage.src = 'game/images/Coin.png';
-    }
-
-    const totalCoins = this.collectibles.length;
-    const totalCoinWidth = totalCoins * Game.COIN_SIZE + (totalCoins - 1) * Game.COIN_MARGIN;
-    const startX = this.WIDTH / 2 - totalCoinWidth / 2;
-    const coinY = this._scoreBox.y + 120;
-
-    if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
-      // 取得したコイン（カラー）
-      for (let i = 0; i < this.collectedCount; i++) {
-        const coinX = startX + i * (Game.COIN_SIZE + Game.COIN_MARGIN);
-        ctx.drawImage(
-          Collectible.coinImage,
-          coinX,
-          coinY - Game.COIN_SIZE / 2,
-          Game.COIN_SIZE,
-          Game.COIN_SIZE
-        );
+      for (let i = 0; i < this.collectibles.length; i++) {
+        const coinIcon = document.createElement('i');
+        coinIcon.style.cssText = `
+          font-size: 32px;
+          color: ${i < this.collectedCount ? '#FFD700' : '#ccc'};
+          transition: transform 0.3s ease;
+        `;
+        coinIcon.className = 'fas fa-coins';
+        coinIcon.onmouseover = () => {
+          coinIcon.style.transform = 'scale(1.2) rotate(10deg)';
+        };
+        coinIcon.onmouseout = () => {
+          coinIcon.style.transform = 'scale(1) rotate(0)';
+        };
+        coinContainer.appendChild(coinIcon);
       }
 
-      // 未取得コイン（グレースケール）
-      ctx.globalAlpha = 0.3;
-      for (let i = this.collectedCount; i < totalCoins; i++) {
-        const coinX = startX + i * (Game.COIN_SIZE + Game.COIN_MARGIN);
-        ctx.drawImage(
-          Collectible.coinImage,
-          coinX,
-          coinY - Game.COIN_SIZE / 2,
-          Game.COIN_SIZE,
-          Game.COIN_SIZE
-        );
-      }
-      ctx.globalAlpha = 1.0;
-    } else {
-      // 画像読み込み中
-      ctx.font = "24px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillStyle = "black";
-      ctx.fillText(`取得アイテム: ${this.collectedCount} / ${totalCoins}`, this.WIDTH / 2, coinY - 20);
+      scoreDiv.appendChild(coinContainer);
+      scoreBox.appendChild(scoreDiv);
+
+      // スコア詳細
+      const scoreDetail = document.createElement('p');
+      scoreDetail.style.cssText = `
+        margin: 15px 0 30px 0;
+        font-size: 1.1em;
+        color: #333;
+        font-weight: bold;
+      `;
+      scoreDetail.textContent = `${this.collectedCount} / ${this.collectibles.length}`;
+      scoreBox.appendChild(scoreDetail);
     }
+
+    // ボタンエリア
+    const buttonArea = document.createElement('div');
+    buttonArea.style.cssText = `
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    `;
+
+    // リスタートボタン
+    const restartBtn = this.createIconButton('↺ リスタート', '#2196F3', () => {
+      this.cleanup();
+      this._lastScoreButton = "restart";
+      this.restart();
+    });
+    buttonArea.appendChild(restartBtn);
+
+    // ホームボタン
+    const homeBtn = this.createIconButton('⌂ ホーム', '#4caf50', () => {
+      this.cleanup();
+      this._lastScoreButton = "home";
+      this.running = false;
+    });
+    buttonArea.appendChild(homeBtn);
+
+    // NEXTボタン（CLEAR!かつ最終ステージでない場合）
+    if (this.state === "CLEAR!" && this.stageId < Game.MAX_STAGE) {
+      const nextBtn = this.createIconButton('→ 次へ', '#FF9800', () => {
+        this.cleanup();
+        this._lastScoreButton = "next";
+        this.running = false;
+      });
+      buttonArea.appendChild(nextBtn);
+    }
+
+    scoreBox.appendChild(buttonArea);
+    scoreScreenUI.appendChild(scoreBox);
+    document.body.appendChild(scoreScreenUI);
   }
 
-  drawButtons() {
-    const ctx = this.ctx;
-    ctx.font = "28px Arial";
-    ctx.fillStyle = "#4caf50";
+  createIconButton(label, bgColor, onClick) {
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      padding: 15px 25px;
+      background: linear-gradient(135deg, ${bgColor} 0%, ${this.darkenColor(bgColor, 20)} 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
 
-    // ボタン背景
-    this._scoreButtons.forEach(btn => {
-      if ((this.state === "GAME OVER" || this.stageId >= Game.MAX_STAGE) && btn.label === "NEXT") return;
-      ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
-    });
+    btn.textContent = label;
 
-    // ボタンアイコン表示
-    this._scoreButtons.forEach(btn => {
-      if ((this.state === "GAME OVER" || this.stageId >= Game.MAX_STAGE) && btn.label === "NEXT") return;
-      
-      // アイコン用HTML要素を作成（キャンバス上に重ねて表示）
-      this.drawCanvasIcon(ctx, btn);
-    });
-  }
-
-  drawCanvasIcon(ctx, btn) {
-    // キャンバス上にFontAwesomeアイコンを疑似表示するため、テキストベースで代替
-    // 実際のアイコン表示は、オーバーレイHTMLで実装するのが最適
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = "24px Arial";
-    
-    // アイコン記号として使用（テキストフォールバック）
-    const iconSymbols = {
-      'fa-redo': '↺',
-      'fa-home': '⌂',
-      'fa-arrow-right': '→'
+    btn.onmouseover = () => {
+      btn.style.transform = 'translateY(-3px)';
+      btn.style.boxShadow = '0 6px 16px rgba(0,0,0,0.3)';
     };
-    
-    const symbol = iconSymbols[btn.icon] || btn.label;
-    ctx.fillText(symbol, btn.x + btn.w / 2, btn.y + btn.h / 2);
+
+    btn.onmouseout = () => {
+      btn.style.transform = 'translateY(0)';
+      btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+    };
+
+    btn.onclick = onClick;
+    return btn;
+  }
+
+  darkenColor(color, percent) {
+    const num = parseInt(color.replace("#",""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) - amt;
+    const G = (num >> 8 & 0x00FF) - amt;
+    const B = (num & 0x0000FF) - amt;
+    return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+      (G<255?G<1?0:G:255)*0x100 +
+      (B<255?B<1?0:B:255))
+      .toString(16).slice(1);
+  }
+
+  cleanup() {
+    const scoreScreenUI = document.getElementById('score-screen-ui');
+    if (scoreScreenUI) scoreScreenUI.remove();
   }
 
   // === ゲームループ ===
