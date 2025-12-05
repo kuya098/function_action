@@ -118,17 +118,15 @@ export function drawHome(ctx, canvas, onStageSelect) {
       gap: 8px;
     `;
 
-    if (clearRate > 0) {
-      const starIcon = document.createElement('i');
-      starIcon.className = clearRate === 100 ? 'fas fa-star' : 'far fa-star';
-      starIcon.style.color = '#FFD700';
-      rateDiv.appendChild(starIcon);
+    const starIcon = document.createElement('i');
+    starIcon.className = clearRate === 100 ? 'fas fa-star' : 'far fa-star';
+    starIcon.style.color = '#FFD700';
+    rateDiv.appendChild(starIcon);
 
-      const rateText = document.createElement('span');
-      rateText.textContent = `${clearRate}%`;
-      rateText.style.fontSize = '16px';
-      rateDiv.appendChild(rateText);
-    }
+    const rateText = document.createElement('span');
+    rateText.textContent = `${clearRate}%`;
+    rateText.style.fontSize = '16px';
+    rateDiv.appendChild(rateText);
 
     button.appendChild(label);
     button.appendChild(rateDiv);
