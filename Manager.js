@@ -1,5 +1,9 @@
 import { drawHome } from './Home.js';
 import { startGame } from './game/Main.js';
+import { soundManager } from './game/SoundManager.js';
+
+// グローバルにsoundManagerを設定
+window.soundManager = soundManager;
 
 // Canvas作成
 const canvas = document.getElementById("canvas");

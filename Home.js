@@ -1,6 +1,8 @@
 // ホーム画面の描画・UI管理
 // FontAwesomeアイコンを使ったUI実装
 
+import { soundManager } from './game/SoundManager.js';
+
 let stageData = {};
 fetch('game/stage_data.json')
   .then(response => response.json())
@@ -28,6 +30,9 @@ export function drawHome(ctx, canvas, onStageSelect) {
   // クリア画面UIが残っていたら削除
   const scoreScreenUI = document.getElementById('score-screen-ui');
   if (scoreScreenUI) scoreScreenUI.remove();
+
+  // ホームBGMを再生
+  soundManager.playBGM('homeBGM');
 
   // キャンバス描画をクリア
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -132,6 +137,7 @@ export function drawHome(ctx, canvas, onStageSelect) {
     button.appendChild(rateDiv);
 
     button.onclick = () => {
+      soundManager.playSE('button');
       cleanup();
       onStageSelect(stage.id);
     };

@@ -1,6 +1,7 @@
 // Gameクラス本体（他のクラスはimportで利用）
 import { Player } from './Player.js';
 import { Platform, Collectible, Hazard, Goal } from './entities.js';
+import { soundManager } from './SoundManager.js';
 // import * as math from 'mathjs';
 
 let stageData = {};
@@ -55,6 +56,10 @@ export class Game {
     this.initInput();
     this.initClickHandler();
     this.initInputField();
+    
+    // BGM再生
+    soundManager.playBGM('gameBGM');
+    
     this.loop();
   }
 
@@ -251,11 +256,15 @@ export class Game {
     // gameover判定
     if (this.player.y <= -1) {
       this.state = "GAME OVER";
+      soundManager.playSE('gameover');
+      soundManager.stopBGM();
     }
     // ゴール判定
     if (this.goal.check(this.player)) {
       this.state = "CLEAR!";
       this.saveClearData();
+      soundManager.playSE('goal');
+      soundManager.stopBGM();
     }
   }
 
@@ -285,11 +294,16 @@ export class Game {
     // ハザード判定
     if (this.hazards.some(h => h.check(this.player))) {
       this.state = "GAME OVER";
+      soundManager.playSE('gameover');
+      soundManager.stopBGM();
     }
 
     // オブジェクト取得判定
     this.collectibles.forEach(c => {
-      if (c.check(this.player)) this.collectedCount++;
+      if (c.check(this.player)) {
+        this.collectedCount++;
+        soundManager.playSE('coin');
+      }
     });
   }
 
@@ -510,6 +524,7 @@ export class Game {
 
     btn.onclick = (e) => {
       console.log('clicked', label);
+      soundManager.playSE('button');
       onClick.call(this, e);
     };
     return btn;

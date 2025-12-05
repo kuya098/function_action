@@ -66,7 +66,13 @@ export class Player {
     this.y += verticalAdjust;
     if (verticalAdjust !== 0) {
       this.velocity.y = 0;
-      if (keys.up) this.velocity.y = Player.JUMP_POWER; // ジャンプ
+      if (keys.up) {
+        this.velocity.y = Player.JUMP_POWER; // ジャンプ
+        // ジャンプ音を再生
+        if (window.soundManager) {
+          window.soundManager.playSE('jump');
+        }
+      }
     }
   }
 
