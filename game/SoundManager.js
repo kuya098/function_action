@@ -22,7 +22,9 @@ export class SoundManager {
 
     for (const [key, path] of Object.entries(soundFiles)) {
       this.sounds[key] = new Audio(path);
-      if (key.includes('BGM')) {
+      if (key === 'coin') {
+        this.sounds[key].volume = 0.8;
+      } else if (key.includes('BGM')) {
         this.sounds[key].loop = true;
         this.sounds[key].volume = this.bgmVolume;
       } else {
