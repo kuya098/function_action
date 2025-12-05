@@ -323,8 +323,8 @@ export class Game {
         
         const coinSize = 40;
         const coinSpacing = 50;
-        const totalCoinWidth = this.collectedCount * coinSpacing;
-        const startX = this.WIDTH / 2 - totalCoinWidth / 2 + coinSpacing / 2;
+        const totalCoinWidth = this.collectedCount * coinSpacing - (coinSpacing - coinSize);
+        const startX = this.WIDTH / 2 - totalCoinWidth / 2;
         const coinY = this._scoreBox.y + 90;
         
         if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
