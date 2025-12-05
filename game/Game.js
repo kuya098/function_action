@@ -76,7 +76,7 @@ export class Game {
       // ハザード
       this.hazards = [];
       stage.hazards?.forEach(item => {
-        this.hazards.push(new Hazard(item.x, item.y, item.width, item.height));
+        this.hazards.push(new Hazard(item.x, item.y, item.size));
       });
 
       // 必須通過点

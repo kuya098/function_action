@@ -132,14 +132,14 @@ export class Collectible {
 export class Hazard {
   static get FILL_COLOR() { return "red"; }
   static get IMAGE_PATH() { return 'game/images/Hazard.png'; }
-  static get DEFAULT_WIDTH() { return 1; }
-  static get DEFAULT_HEIGHT() { return 1; }
+  static get DEFAULT_SIZE() { return 1; }
 
-  constructor(x, y, width = Hazard.DEFAULT_WIDTH, height = Hazard.DEFAULT_HEIGHT) {
+  constructor(x, y, size = Hazard.DEFAULT_SIZE) {
     this.x = x;
     this.y = y;
-    this.width = width;
-    this.height = height;
+    this.size = size;
+    this.width = size;
+    this.height = size;
   }
 
   static get hazardImage() {
