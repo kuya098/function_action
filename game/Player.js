@@ -127,27 +127,20 @@ export class Player {
     const SAMPLES_INTERVAL = 0.1;
     let maxGroundY = null;
     let contact = false;
-    
-    // 簡易版：角丸矩形を考慮しながら、当たり判定を矩形のまま使用
-    // 角丸による縮小を適用（下部の角丸を考慮して有効な下端を上げる）
-    const cornerRadius = Math.min(this.width, this.height) * 0.28;
-    const effectiveYMin = yMin + cornerRadius * 0.5; // 角丸を考慮した有効下端
-    
     for (let x = xMin; x <= xMax; x += SAMPLES_INTERVAL) {
       const groundY = fn(x);
-      // サンプル点がプレイヤーと接触しているか
-      if (groundY >= effectiveYMin && groundY <= yMax) {
+      // サンプル点がプレイヤー矩形の下辺と接触しているか
+      if (groundY >= yMin && groundY <= yMax) {
         contact = true;
         if (maxGroundY === null || groundY > maxGroundY) {
           maxGroundY = groundY;
         }
       }
     }
-    
     // どのサンプル点も接触していなければ0を返す
     if (!contact) return 0;
-    // プレイヤーの有効な下辺に合わせる
-    return maxGroundY - effectiveYMin;
+    // プレイヤーの下辺を最大地面yに合わせる
+    return maxGroundY - yMin;
   }
 
 }
