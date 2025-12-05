@@ -1,6 +1,6 @@
 // Gameクラス本体（他のクラスはimportで利用）
 import { Player } from './Player.js';
-import { Platform, Collectible, Hazard, Goal } from './entities.js';
+import { Platform, Collectible, Hazard, Goal, RequiredPoint } from './entities.js';
 import { soundManager } from './SoundManager.js';
 // import * as math from 'mathjs';
 
@@ -79,6 +79,12 @@ export class Game {
         this.hazards.push(new Hazard(item.x, item.y, item.width, item.height));
       });
 
+      // 必須通過点
+      this.requiredPoints = [];
+      stage.requiredPoints?.forEach(item => {
+        this.requiredPoints.push(new RequiredPoint(item.x, item.y));
+      });
+
       // ゴール
       this.goal = new Goal(stage.goal.x, stage.goal.y);
     }
@@ -129,7 +135,19 @@ export class Game {
     try {
       const compiled = math.compile(expr);
       compiled.evaluate({ x: 0 });
-      this.functionPlatform.fn = x => compiled.evaluate({ x });
+      const fn = x => compiled.evaluate({ x });
+
+      // 必須通過点の検証
+      for (const rp of this.requiredPoints) {
+        if (!rp.check(fn)) {
+          const input = document.getElementById('expr');
+          if (input) input.value = this.fnText;
+          alert('関数の式が不正です');
+          return;
+        }
+      }
+
+      this.functionPlatform.fn = fn;
       this.fnText = expr;
       this.updateDisplayLatex(expr);
       const input = document.getElementById('expr');
@@ -333,6 +351,7 @@ export class Game {
     this.functionPlatform.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
     this.collectibles.forEach(c => c.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY));
     this.hazards.forEach(h => h.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY));
+    this.requiredPoints.forEach(rp => rp.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY));
     this.goal.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
     this.player.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
 

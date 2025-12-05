@@ -267,3 +267,32 @@ export class Goal {
     return !(a.right < b.left || a.left > b.right || a.top < b.bottom || a.bottom > b.top);
   }
 }
+
+// === RequiredPoint（関数が必ず通らなければいけない点） ===
+export class RequiredPoint {
+  static get RADIUS() { return 0.15; }
+  static get COLOR() { return "#000000"; }
+
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  draw(ctx, originX, originY, scaleX, scaleY) {
+    const px = originX + this.x * scaleX;
+    const py = originY - this.y * scaleY;
+    const radius = RequiredPoint.RADIUS * scaleX;
+
+    ctx.fillStyle = RequiredPoint.COLOR;
+    ctx.beginPath();
+    ctx.arc(px, py, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  check(fn) {
+    // 関数が此の点を通っているかチェック（誤差0.05以内）
+    const tolerance = 0.05;
+    const expectedY = fn(this.x);
+    return Math.abs(expectedY - this.y) < tolerance;
+  }
+}
