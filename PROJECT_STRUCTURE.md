@@ -98,7 +98,5 @@ function_action_game/
 - グローバル関数は Manager.js で window に登録
 - soundManager はグローバルで利用可能（Manager.js で設定）
 - RequiredPoint の許容値は 0.05 単位
-
-## 注意点
-- fetchによるjsonロードは非同期なので、データ取得後にGameインスタンス生成が必要
-- グローバル関数はManager.jsでwindowに登録
+- 入力フィールドはHTMLの `.input-container` 内に flex row で配置、フォーカス時に矢印キーを無視
+- マウス/タッチ入力はゲーム領域全体で検出可能
