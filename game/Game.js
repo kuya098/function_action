@@ -315,10 +315,50 @@ export class Game {
 
       // スコア表示（CLEAR!のときのみ、メッセージの下に余白）
       if (this.state === "CLEAR!") {
-        ctx.font = "24px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        ctx.fillText(`取得アイテム: ${this.collectedCount} / ${this.collectibles.length}`, this.WIDTH/2, this._scoreBox.y + 80);
+        // コイン画像を取得枚数分表示
+        if (!Collectible.coinImage) {
+          Collectible.coinImage = new Image();
+          Collectible.coinImage.src = 'game/images/Coin.png';
+        }
+        
+        const coinSize = 40;
+        const coinSpacing = 50;
+        const totalCoinWidth = this.collectedCount * coinSpacing;
+        const startX = this.WIDTH / 2 - totalCoinWidth / 2 + coinSpacing / 2;
+        const coinY = this._scoreBox.y + 90;
+        
+        if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
+          // 取得したコイン（カラー）
+          for (let i = 0; i < this.collectedCount; i++) {
+            ctx.drawImage(
+              Collectible.coinImage,
+              startX + i * coinSpacing - coinSize / 2,
+              coinY - coinSize / 2,
+              coinSize,
+              coinSize
+            );
+          }
+          
+          // 取得していないコイン（グレースケール）
+          ctx.globalAlpha = 0.3;
+          for (let i = this.collectedCount; i < this.collectibles.length; i++) {
+            ctx.drawImage(
+              Collectible.coinImage,
+              startX + i * coinSpacing - coinSize / 2,
+              coinY - coinSize / 2,
+              coinSize,
+              coinSize
+            );
+          }
+          ctx.globalAlpha = 1.0;
+        } else {
+          // 画像読み込み中はテキスト表示
+          ctx.font = "24px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillStyle = "black";
+          ctx.fillText(`取得アイテム: ${this.collectedCount} / ${this.collectibles.length}`, this.WIDTH/2, coinY - 20);
+        }
       }
 
       // ボタン描画
