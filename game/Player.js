@@ -29,7 +29,7 @@ export class Player {
 
   // === メインメソッド ===
   update(keys, groundFunc) {
-    this.updateHorizontalMovement(keys);
+    this.updateHorizontalMovement(keys, groundFunc);
     this.updateVerticalMovement(groundFunc, keys);
     this.enforceWorldBoundaries();
     this.updateTrail();
@@ -42,10 +42,24 @@ export class Player {
   }
 
   // === 物理更新メソッド ===
-  updateHorizontalMovement(keys) {
+  updateHorizontalMovement(keys, groundFunc) {
     // 横移動
     this.velocity.x = keys.left ? -Player.MOVE_SPEED : keys.right ? Player.MOVE_SPEED : 0;
     this.x += this.velocity.x;
+
+    // 天井に接触している場合、関数との衝突判定を行う
+    const maxY = Player.CEILING_HEIGHT - this.height;
+    const isTouchingCeiling = Math.abs(this.y - maxY) < 0.01;
+    
+    if (isTouchingCeiling && this.velocity.x !== 0 && groundFunc) {
+      // 移動後の位置で関数と接触しているかチェック
+      const boundingBox = this.getHorizontalBounds();
+      const contact = this.checkGroundCollisionAtCeiling(boundingBox, groundFunc);
+      if (contact) {
+        // 衝突している場合は移動を戻す
+        this.x -= this.velocity.x;
+      }
+    }
 
     // 左右の壁に当たり判定
     const leftBound = Player.WALL_LEFT + this.width / 2;
@@ -121,7 +135,19 @@ export class Player {
     return maxGroundY - boundingBox.yMin;
   }
 
-  // === 描画メソッド ===
+  checkGroundCollisionAtCeiling(boundingBox, groundFunc) {
+    // 天井接触時に関数と接触しているかチェック
+    for (let x = boundingBox.xMin; x <= boundingBox.xMax; x += Player.SAMPLE_INTERVAL) {
+      const groundY = groundFunc(x);
+      if (groundY >= boundingBox.yMin && groundY <= boundingBox.yMax) {
+        return true; // 接触している
+      }
+    }
+    return false; // 接触していない
+  }
+
+// ...existing code...
+
   drawTrail(ctx, originX, originY, scaleX, scaleY) {
     ctx.fillStyle = Player.TRAIL_COLOR;
     this.history.forEach((pos, index) => {
