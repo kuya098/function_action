@@ -478,7 +478,10 @@ export class Game {
       btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
     };
 
-    btn.onclick = onClick;
+    btn.onclick = (e) => {
+      console.log('clicked', label);
+      onClick.call(this, e);
+    };
     return btn;
   }
 
