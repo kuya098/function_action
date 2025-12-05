@@ -27,7 +27,7 @@ export class Game {
   static get BTN_MARGIN() { return 24; }
   static get COIN_SIZE() { return 60; }
   static get COIN_MARGIN() { return 30; }
-  static get MAX_STAGE() { return 3; }
+  static get MAX_STAGE() { return 4; }
 
   constructor(canvas, ctx, stageId) {
     this.canvas = canvas;
@@ -443,7 +443,9 @@ export class Game {
     if (this.state === "CLEAR!" && this.stageId < Game.MAX_STAGE) {
       const nextBtn = this.createIconButton('→ 次へ', '#FF9800', () => {
         console.log('nextBtn clicked');
-        this.cleanup();
+        this.cleanup(); // クリア画面UIを必ず削除
+        const scoreScreenUI = document.getElementById('score-screen-ui');
+        if (scoreScreenUI) scoreScreenUI.remove();
         this._lastScoreButton = "next";
         this.running = false;
       });

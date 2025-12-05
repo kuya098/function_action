@@ -26,7 +26,7 @@ function showHome() {
   }
 
   removeHomeClick = drawHome(ctx, canvas, stageId => {
-    if (stageId <= 3) {
+    if (stageId <= 4) {
       showGame(stageId);
     } else {
       alert(`ステージ${stageId} はまだ未実装です`);
@@ -36,6 +36,9 @@ function showHome() {
 }
 
 function showGame(stageId) {
+  // 画面遷移時にscore-screen-uiを必ず削除
+  const scoreScreenUI = document.getElementById('score-screen-ui');
+  if (scoreScreenUI) scoreScreenUI.remove();
   window.currentStageId = stageId;
   if (removeHomeClick) {
     removeHomeClick();
