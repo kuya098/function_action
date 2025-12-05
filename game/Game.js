@@ -393,8 +393,8 @@ export class Game {
     }
 
     // 関数曲線上を光が走る
-    const startX = 0;
-    const endX = 12;
+    const startX = -1;
+    const endX = 11;
     const currentX = startX + (endX - startX) * progress;
 
     // 光の範囲（前後に少し広げる）
