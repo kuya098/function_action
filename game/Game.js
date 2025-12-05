@@ -152,6 +152,7 @@ export class Game {
       this.updateDisplayLatex(expr);
       const input = document.getElementById('expr');
       if (input) input.value = expr;
+      soundManager.playSE('make_func');
     } catch (e) {
       const input = document.getElementById('expr');
       if (input) input.value = this.fnText;

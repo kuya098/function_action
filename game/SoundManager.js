@@ -16,6 +16,7 @@ export class SoundManager {
       goal: 'game/sounds/goal.mp3',
       gameover: 'game/sounds/gameover.mp3',
       button: 'game/sounds/button.mp3',
+      make_func: 'game/sounds/make_func.mp3',
       gameBGM: 'game/sounds/GameBGM.mp3',
       homeBGM: 'game/sounds/HomeBGM.mp3'
     };
