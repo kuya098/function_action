@@ -318,8 +318,10 @@ export class Game {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: 9999;
     `;
+    // スコア画面表示中はcanvasのクリックを無効化
+    if (this.canvas) this.canvas.style.pointerEvents = 'none';
 
     // スコアボックス
     const scoreBox = document.createElement('div');
@@ -494,6 +496,8 @@ export class Game {
   cleanup() {
     const scoreScreenUI = document.getElementById('score-screen-ui');
     if (scoreScreenUI) scoreScreenUI.remove();
+    // スコア画面を閉じたらcanvasのクリックを有効化
+    if (this.canvas) this.canvas.style.pointerEvents = '';
   }
 
   // === ゲームループ ===
