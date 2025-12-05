@@ -525,7 +525,7 @@ export class Game {
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     `;
 
-    btn.textContent = label;
+    btn.innerHTML = label;
 
     btn.onmouseover = () => {
       btn.style.transform = 'translateY(-3px)';
