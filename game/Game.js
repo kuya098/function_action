@@ -255,7 +255,30 @@ export class Game {
     // ゴール判定
     if (this.goal.check(this.player)) {
       this.state = "CLEAR!";
+      this.saveClearData();
     }
+  }
+
+  saveClearData() {
+    // localStorageにクリアデータを保存
+    const key = `stage_${this.stageId}_clear`;
+    const totalCollectibles = this.collectibles.length;
+    const collectedCount = this.collectedCount;
+    
+    // 既存のデータを取得
+    const existingData = localStorage.getItem(key);
+    let bestCollected = collectedCount;
+    
+    if (existingData) {
+      const data = JSON.parse(existingData);
+      bestCollected = Math.max(data.collected, collectedCount);
+    }
+    
+    localStorage.setItem(key, JSON.stringify({
+      cleared: true,
+      collected: bestCollected,
+      total: totalCollectibles
+    }));
   }
 
   checkCollisions() {

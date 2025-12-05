@@ -1,6 +1,29 @@
 // ホーム画面の描画・UI管理
 // FontAwesomeアイコンを使ったUI実装
 
+let stageData = {};
+fetch('game/stage_data.json')
+  .then(response => response.json())
+  .then(data => {
+    stageData = data;
+  });
+
+function getClearRate(stageId) {
+  const key = `stage_${stageId}_clear`;
+  const data = localStorage.getItem(key);
+  
+  if (!data) return 0;
+  
+  const clearData = JSON.parse(data);
+  if (!clearData.cleared) return 0;
+  
+  // クリアで50%、コレクティブル取得率で残り50%
+  const baseRate = 50;
+  const collectRate = (clearData.collected / clearData.total) * 50;
+  
+  return Math.round(baseRate + collectRate);
+}
+
 export function drawHome(ctx, canvas, onStageSelect) {
   // クリア画面UIが残っていたら削除
   const scoreScreenUI = document.getElementById('score-screen-ui');
@@ -55,6 +78,7 @@ export function drawHome(ctx, canvas, onStageSelect) {
   ];
 
   stages.forEach(stage => {
+    const clearRate = getClearRate(stage.id);
     const button = document.createElement('button');
     button.style.cssText = `
       padding: 20px;
@@ -67,7 +91,7 @@ export function drawHome(ctx, canvas, onStageSelect) {
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       gap: 15px;
       transition: all 0.3s ease;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -82,11 +106,32 @@ export function drawHome(ctx, canvas, onStageSelect) {
       button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
     };
 
-    // テキストのみ
+    // ステージ名
     const label = document.createElement('span');
     label.textContent = stage.name;
 
+    // クリア率表示
+    const rateDiv = document.createElement('div');
+    rateDiv.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+
+    if (clearRate > 0) {
+      const starIcon = document.createElement('i');
+      starIcon.className = clearRate === 100 ? 'fas fa-star' : 'far fa-star';
+      starIcon.style.color = '#FFD700';
+      rateDiv.appendChild(starIcon);
+
+      const rateText = document.createElement('span');
+      rateText.textContent = `${clearRate}%`;
+      rateText.style.fontSize = '16px';
+      rateDiv.appendChild(rateText);
+    }
+
     button.appendChild(label);
+    button.appendChild(rateDiv);
 
     button.onclick = () => {
       cleanup();
