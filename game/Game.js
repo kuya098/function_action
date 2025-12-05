@@ -29,9 +29,7 @@ export class Game {
     this.platforms = [];
     this.functionPlatform = new Platform("function", { fn: x => 0 });
     this.fnText = "0";
-    this.inputText = ""; // 入力エリアのテキスト
-    this.inputLatex = ""; // LaTeX変換後のテキスト
-    this.inputCursorPos = 0; // カーソル位置
+    this.displayLatex = ""; // 表示用LaTeX
 
     this.stageId = stageId;
     const stage = stageData[String(this.stageId)];
@@ -53,63 +51,14 @@ export class Game {
     this.running = true;
     this.state = "playing";
 
-    this.inputFocused = false; // 入力欄がフォーカスされているか
-    this.inputCursorVisible = true; // カーソル点滅用
-    this._cursorBlinkInterval = setInterval(() => {
-      if (this.inputFocused) {
-        this.inputCursorVisible = !this.inputCursorVisible;
-      }
-    }, 500);
-
     this.initInput();
     this.initClickHandler();
+    this.initInputField(); // HTML入力欄の初期化
     this.loop();
   }
 
   initInput() {
     document.addEventListener("keydown", e => {
-      // 入力エリアがフォーカスされている場合のテキスト入力
-      if (this.inputFocused) {
-        if (e.key === "ArrowLeft") {
-          e.preventDefault();
-          this.inputCursorPos = Math.max(0, this.inputCursorPos - 1);
-        } else if (e.key === "ArrowRight") {
-          e.preventDefault();
-          this.inputCursorPos = Math.min(this.inputText.length, this.inputCursorPos + 1);
-        } else if (e.key === "Home") {
-          e.preventDefault();
-          this.inputCursorPos = 0;
-        } else if (e.key === "End") {
-          e.preventDefault();
-          this.inputCursorPos = this.inputText.length;
-        } else if (e.key === "Backspace") {
-          e.preventDefault();
-          if (this.inputCursorPos > 0) {
-            this.inputText = this.inputText.slice(0, this.inputCursorPos - 1) + this.inputText.slice(this.inputCursorPos);
-            this.inputCursorPos--;
-            this.updateLatex();
-          }
-        } else if (e.key === "Delete") {
-          e.preventDefault();
-          if (this.inputCursorPos < this.inputText.length) {
-            this.inputText = this.inputText.slice(0, this.inputCursorPos) + this.inputText.slice(this.inputCursorPos + 1);
-            this.updateLatex();
-          }
-        } else if (e.key === "Enter") {
-          e.preventDefault();
-          // Enterで関数をセット
-          this.setFunction(this.inputText);
-          this.inputFocused = false;
-        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-          // 通常の文字入力（カーソル位置に挿入）
-          this.inputText = this.inputText.slice(0, this.inputCursorPos) + e.key + this.inputText.slice(this.inputCursorPos);
-          this.inputCursorPos++;
-          this.updateLatex();
-        }
-        return;
-      }
-
-      // ゲームの操作キー
       if (e.code === "ArrowLeft") this.keys.left = true;
       if (e.code === "ArrowRight") this.keys.right = true;
       if (e.code === "ArrowUp") this.keys.up = true;
@@ -121,14 +70,43 @@ export class Game {
     });
   }
 
-  updateLatex() {
-    try {
-      const node = math.parse(this.inputText);
-      this.inputLatex = node.toTex();
-    } catch (e) {
-      // パースエラー時はそのまま表示
-      this.inputLatex = "";
+  initInputField() {
+    const input = document.getElementById('expr');
+    const btn = document.getElementById('setBtn');
+    
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (input) {
+          this.setFunction(input.value);
+        }
+      });
     }
+    
+    if (input) {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.setFunction(input.value);
+        }
+      });
+      
+      // 入力値が変わったらLaTeX表示を更新
+      input.addEventListener('input', () => {
+        this.updateDisplayLatex(input.value);
+      });
+    }
+  }
+
+  updateDisplayLatex(text) {
+    try {
+      const node = math.parse(text);
+      this.displayLatex = node.toTex();
+    } catch (e) {
+      this.displayLatex = "";
+    }
+  }
+
+  updateLatex() {
+    // 互換性のため残す（使われていない）
   }
 
   setFunction(expr) {
@@ -139,6 +117,7 @@ export class Game {
       // 正常なら関数をセット
       this.functionPlatform.fn = x => compiled.evaluate({ x });
       this.fnText = expr;
+      this.updateDisplayLatex(expr);
       // 入力欄の値を最新関数に
       const input = document.getElementById('expr');
       if (input) input.value = expr;
@@ -215,23 +194,11 @@ export class Game {
   // --- クリックイベント管理 ---
   initClickHandler() {
     this._canvasClickHandler = (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-
-      // 入力エリアのクリック判定
-      if (my >= this.playHeight && my <= this.HEIGHT) {
-        this.inputFocused = true;
-        this.inputCursorVisible = true;
-        // クリック位置に応じてカーソル位置を設定（簡易版：末尾に移動）
-        this.inputCursorPos = this.inputText.length;
-        return;
-      } else {
-        this.inputFocused = false;
-      }
-
       // スコア画面のボタン判定
       if (this.state !== "playing" && this._scoreButtons) {
+        const rect = this.canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
         for (const btn of this._scoreButtons) {
           if (mx >= btn.x && mx <= btn.x + btn.w && my >= btn.y && my <= btn.y + btn.h) {
             btn.onClick();
@@ -241,18 +208,6 @@ export class Game {
       }
     };
     this.canvas.addEventListener('click', this._canvasClickHandler);
-
-    // マウスホバーでカーソル変更
-    this._canvasMouseMoveHandler = (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const my = e.clientY - rect.top;
-      if (my >= this.playHeight && my <= this.HEIGHT) {
-        this.canvas.style.cursor = 'text';
-      } else {
-        this.canvas.style.cursor = 'default';
-      }
-    };
-    this.canvas.addEventListener('mousemove', this._canvasMouseMoveHandler);
   }
 
   removeClickHandler() {
@@ -260,11 +215,6 @@ export class Game {
       this.canvas.removeEventListener('click', this._canvasClickHandler);
       this._canvasClickHandler = null;
     }
-    if (this._canvasMouseMoveHandler) {
-      this.canvas.removeEventListener('mousemove', this._canvasMouseMoveHandler);
-      this._canvasMouseMoveHandler = null;
-    }
-    this.canvas.style.cursor = 'default';
   }
 
   // リスタート処理（必要に応じてmain.js等から呼び出し）
@@ -362,9 +312,8 @@ export class Game {
     ctx.lineWidth = 1;
     ctx.strokeRect(0, this.playHeight, this.WIDTH, this.inputAreaHeight);
 
-    // 入力テキストのLaTeX描画
-    if (this.inputLatex) {
-      // DOM要素を使ってKaTeXレンダリング
+    // LaTeX数式表示（表示専用）
+    if (this.displayLatex) {
       if (!this._latexContainer) {
         this._latexContainer = document.createElement('div');
         this._latexContainer.style.position = 'absolute';
@@ -376,11 +325,11 @@ export class Game {
       this._latexContainer.style.top = (rect.top + this.playHeight + 5) + 'px';
       this._latexContainer.style.fontSize = '20px';
       try {
-        katex.render(this.inputLatex, this._latexContainer, { throwOnError: false });
+        katex.render(this.displayLatex, this._latexContainer, { throwOnError: false });
       } catch (e) {
-        this._latexContainer.textContent = this.inputText;
+        this._latexContainer.textContent = this.fnText;
       }
-    } else if (this.inputText) {
+    } else if (this.fnText) {
       // LaTeX変換できない場合は通常テキスト
       ctx.fillStyle = "black";
       ctx.font = "20px Arial";
@@ -388,7 +337,7 @@ export class Game {
       ctx.textBaseline = "middle";
       const textX = 10;
       const textY = this.playHeight + this.inputAreaHeight / 2;
-      ctx.fillText(this.inputText, textX, textY);
+      ctx.fillText(this.fnText, textX, textY);
       if (this._latexContainer) {
         this._latexContainer.textContent = '';
       }
@@ -396,49 +345,6 @@ export class Game {
       if (this._latexContainer) {
         this._latexContainer.textContent = '';
       }
-    }
-
-    // 入力欄のカーソル描画（フォーカス時に点滅）
-    if (this.inputFocused && this.inputCursorVisible) {
-      ctx.strokeStyle = "black";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      let cursorX = 10;
-      
-      // カーソル位置までのテキスト幅を計算
-      if (this.inputLatex) {
-        // LaTeX表示の場合: 一時的な隠し要素で計測
-        if (!this._cursorMeasureContainer) {
-          this._cursorMeasureContainer = document.createElement('div');
-          this._cursorMeasureContainer.style.position = 'absolute';
-          this._cursorMeasureContainer.style.visibility = 'hidden';
-          this._cursorMeasureContainer.style.fontSize = '20px';
-          document.body.appendChild(this._cursorMeasureContainer);
-        }
-        // カーソル位置までの部分文字列をLaTeX変換
-        try {
-          const textBeforeCursor = this.inputText.slice(0, this.inputCursorPos);
-          if (textBeforeCursor) {
-            const nodeBeforeCursor = math.parse(textBeforeCursor);
-            const latexBeforeCursor = nodeBeforeCursor.toTex();
-            katex.render(latexBeforeCursor, this._cursorMeasureContainer, { throwOnError: false });
-            cursorX += this._cursorMeasureContainer.offsetWidth;
-          }
-        } catch (e) {
-          // パースエラー時は通常テキストで計測
-          ctx.font = "20px Arial";
-          cursorX += ctx.measureText(this.inputText.slice(0, this.inputCursorPos)).width;
-        }
-      } else {
-        // 通常テキストの場合
-        ctx.font = "20px Arial";
-        cursorX += ctx.measureText(this.inputText.slice(0, this.inputCursorPos)).width;
-      }
-      
-      const cursorY = this.playHeight + 10;
-      ctx.moveTo(cursorX, cursorY);
-      ctx.lineTo(cursorX, cursorY + this.inputAreaHeight - 20);
-      ctx.stroke();
     }
 
     this.drawGrid();
