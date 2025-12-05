@@ -321,12 +321,12 @@ export class Game {
           Collectible.coinImage.src = 'game/images/Coin.png';
         }
         
-        const coinSize = 40;
-        const coinMargin = 5; // コイン間のマージン
+        const coinSize = 60;
+        const coinMargin = 30; // コイン間のマージン
         const totalCoins = this.collectibles.length;
         const totalCoinWidth = totalCoins * coinSize + (totalCoins - 1) * coinMargin;
         const startX = this.WIDTH / 2 - totalCoinWidth / 2;
-        const coinY = this._scoreBox.y + 90;
+        const coinY = this._scoreBox.y + 120;
         
         if (Collectible.coinImage.complete && Collectible.coinImage.naturalWidth > 0) {
           // 取得したコイン（カラー）

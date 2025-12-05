@@ -6,6 +6,7 @@ export class Player {
     this.height = height;
     this.velocity = { x: 0, y: 0 };
     this.history = [];
+    this.cornerRadius = Math.min(width, height) * 0.28; // 描画時と同じ角丸半径
   }
 
   update(keys, groundFunc) {
@@ -127,20 +128,42 @@ export class Player {
     const SAMPLES_INTERVAL = 0.1;
     let maxGroundY = null;
     let contact = false;
+    
+    // プレイヤーの有効高さ（角丸を考慮）
+    const effectiveYMin = yMin + this.cornerRadius;
+    
     for (let x = xMin; x <= xMax; x += SAMPLES_INTERVAL) {
       const groundY = fn(x);
-      // サンプル点がプレイヤー矩形の下辺と接触しているか
-      if (groundY >= yMin && groundY <= yMax) {
+      
+      // x座標に応じた有効なyMin を計算（角丸を考慮）
+      let currentYMin = effectiveYMin;
+      
+      // 左右の角丸部分を考慮
+      if (x < xMin + this.cornerRadius) {
+        // 左角丸: 円弧の式を使用
+        const dx = x - (xMin + this.cornerRadius);
+        const dy = Math.sqrt(Math.max(0, this.cornerRadius * this.cornerRadius - dx * dx));
+        currentYMin = yMin + this.cornerRadius - dy;
+      } else if (x > xMax - this.cornerRadius) {
+        // 右角丸: 円弧の式を使用
+        const dx = x - (xMax - this.cornerRadius);
+        const dy = Math.sqrt(Math.max(0, this.cornerRadius * this.cornerRadius - dx * dx));
+        currentYMin = yMin + this.cornerRadius - dy;
+      }
+      
+      // サンプル点がプレイヤーと接触しているか
+      if (groundY >= currentYMin && groundY <= yMax) {
         contact = true;
         if (maxGroundY === null || groundY > maxGroundY) {
           maxGroundY = groundY;
         }
       }
     }
+    
     // どのサンプル点も接触していなければ0を返す
     if (!contact) return 0;
-    // プレイヤーの下辺を最大地面yに合わせる
-    return maxGroundY - yMin;
+    // プレイヤーの有効な下辺に合わせる
+    return maxGroundY - effectiveYMin;
   }
 
 }
