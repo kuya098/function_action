@@ -90,7 +90,7 @@ export class Hazard {
   draw(ctx, originX, originY, scaleX, scaleY) {
     if (!Hazard.hazardImage) {
       Hazard.hazardImage = new Image();
-      Hazard.hazardImage.src = 'game/images/hazard.png';
+      Hazard.hazardImage.src = 'game/images/Hazard.png';
     }
     if (Hazard.hazardImage.complete && Hazard.hazardImage.naturalWidth > 0) {
       ctx.drawImage(
@@ -135,7 +135,7 @@ export class Goal {
   draw(ctx, originX, originY, scaleX, scaleY) {
     if (!Goal.goalImage) {
       Goal.goalImage = new Image();
-      Goal.goalImage.src = 'game/images/flag.png';
+      Goal.goalImage.src = 'game/images/Flag.png';
     }
     if (Goal.goalImage.complete && Goal.goalImage.naturalWidth > 0) {
       ctx.drawImage(
