@@ -87,11 +87,23 @@ export class Game {
   // === 入力処理 ===
   initInput() {
     document.addEventListener("keydown", e => {
+      // 入力欄がfocus状態なら矢印キーを無視
+      const inputElement = document.getElementById('expr');
+      if (inputElement && inputElement === document.activeElement) {
+        return;
+      }
+      
       if (e.code === "ArrowLeft") this.keys.left = true;
       if (e.code === "ArrowRight") this.keys.right = true;
       if (e.code === "ArrowUp") this.keys.up = true;
     });
     document.addEventListener("keyup", e => {
+      // 入力欄がfocus状態なら矢印キーを無視
+      const inputElement = document.getElementById('expr');
+      if (inputElement && inputElement === document.activeElement) {
+        return;
+      }
+      
       if (e.code === "ArrowLeft") this.keys.left = false;
       if (e.code === "ArrowRight") this.keys.right = false;
       if (e.code === "ArrowUp") this.keys.up = false;
