@@ -18,31 +18,52 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      justify-content: flex-start;
+      min-height: auto;
+      padding-top: 10px;
     }
     canvas {
       border: 1px solid #ccc;
       background: white;
       display: block;
-      margin: 0 auto;
+      margin: 0;
+    }
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      width: 600px;
     }
     #expr {
-      margin-top: 18px;
-      width: 700px;
+      width: 100%;
       font-size: 24px;
       padding: 10px 16px;
       border-radius: 8px;
       border: 1px solid #bbb;
       box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      box-sizing: border-box;
+    }
+    #drawBtn {
+      padding: 10px 24px;
+      font-size: 18px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div class="center">
     <canvas id="canvas" width="600" height="400"></canvas>
-    <br>
-    <input id="expr" type="text" value="0" placeholder="関数を入力 (例: x^2, sin(x), x/2)" />
+    <div class="input-container">
+      <input id="expr" type="text" value="0" placeholder="関数を入力 (例: x^2, sin(x), x/2)" />
+      <button id="drawBtn">描画</button>
+    </div>
   </div>
   <script type="module" src="Manager.js"></script>
 </body>

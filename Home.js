@@ -49,7 +49,7 @@ export function drawHome(ctx, canvas, onStageSelect) {
   homeContainer.id = 'home-container';
   homeContainer.style.cssText = `
     max-width: 600px;
-    margin: 0 auto;
+    margin: 40px auto 0 auto;
     padding: 40px 20px;
     background: white;
     border-radius: 10px;
@@ -147,11 +147,14 @@ export function drawHome(ctx, canvas, onStageSelect) {
 
   homeContainer.appendChild(stagesContainer);
 
-  // 入力欄を隠す
+  // 入力欄・ボタンを隠す
   const input = document.getElementById('expr');
-  if (input) input.style.display = 'none';
   const drawBtn = document.getElementById('drawBtn');
+  const inputContainer = document.querySelector('.input-container');
+  
+  if (input) input.style.display = 'none';
   if (drawBtn) drawBtn.style.display = 'none';
+  if (inputContainer) inputContainer.style.display = 'none';
 
   // DOMに追加
   document.body.appendChild(homeContainer);
@@ -162,6 +165,7 @@ export function drawHome(ctx, canvas, onStageSelect) {
     canvas.style.display = 'block';
     if (input) input.style.display = 'block';
     if (drawBtn) drawBtn.style.display = 'block';
+    if (inputContainer) inputContainer.style.display = 'flex';
   }
 
   return cleanup;
