@@ -168,16 +168,22 @@ export class Hazard {
   }
 
   check(player) {
-    // プレイヤーの中心位置とハザード中心との距離を計算
-    const dx = player.x - this.x;
-    const dy = player.y - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // 円形の当たり判定: プレイヤー半径 + ハザード半径
-    const playerRadius = Math.max(player.width, player.height) / 2;
-    const hazardRadius = Hazard.COLLISION_RADIUS;
-    
-    return distance < (playerRadius + hazardRadius);
+    // プレイヤーのAABBとハザード円の当たり判定
+    const left = player.x - player.width / 2;
+    const right = player.x + player.width / 2;
+    const top = player.y + player.height;
+    const bottom = player.y;
+    const cx = this.x;
+    const cy = this.y;
+    const r = Hazard.COLLISION_RADIUS;
+
+    // 最近傍点を求める
+    const closestX = Math.max(left, Math.min(cx, right));
+    const closestY = Math.max(bottom, Math.min(cy, top));
+    const dx = cx - closestX;
+    const dy = cy - closestY;
+    const distSq = dx * dx + dy * dy;
+    return distSq < r * r;
   }
 
   getPlayerBounds(player) {
