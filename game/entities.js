@@ -118,8 +118,8 @@ export class Collectible {
     return {
       left: this.x - this.size / 2,
       right: this.x + this.size / 2,
-      top: this.y + this.size,
-      bottom: this.y
+      top: this.y + this.size / 2,
+      bottom: this.y - this.size / 2
     };
   }
 
