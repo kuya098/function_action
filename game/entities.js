@@ -133,6 +133,7 @@ export class Hazard {
   static get FILL_COLOR() { return "red"; }
   static get IMAGE_PATH() { return 'game/images/Hazard.png'; }
   static get DEFAULT_SIZE() { return 1; }
+  static get COLLISION_RADIUS() { return 0.25; }
 
   constructor(x, y, size = Hazard.DEFAULT_SIZE) {
     this.x = x;
@@ -167,10 +168,16 @@ export class Hazard {
   }
 
   check(player) {
-    return this.boundsIntersect(
-      this.getPlayerBounds(player),
-      this.getBounds()
-    );
+    // プレイヤーの中心位置とハザード中心との距離を計算
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // 円形の当たり判定: プレイヤー半径 + ハザード半径
+    const playerRadius = Math.max(player.width, player.height) / 2;
+    const hazardRadius = Hazard.COLLISION_RADIUS;
+    
+    return distance < (playerRadius + hazardRadius);
   }
 
   getPlayerBounds(player) {
