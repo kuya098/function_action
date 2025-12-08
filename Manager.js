@@ -41,7 +41,7 @@ function showHome() {
   }
 
   removeHomeClick = drawHome(ctx, canvas, stageId => {
-    if (stageId <= 4) {
+    if (stageId <= 5) {
       showGame(stageId);
     } else {
       alert(`ステージ${stageId} はまだ未実装です`);
