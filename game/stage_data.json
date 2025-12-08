@@ -18,7 +18,8 @@
       { "x": 4, "y": 0, "size": 1 },
       { "x": 7, "y": 1, "size": 1 }
     ],
-    "goal": { "x": 1, "y": 6 }
+    "goal": { "x": 10, "y": 3.5 },
+    "initialFunction": "sin(x)"
   },
   "3": {
     "collectibles": [
