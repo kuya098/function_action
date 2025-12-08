@@ -157,8 +157,8 @@ export class Game {
       compiled.evaluate({ x: 0, t: this.time });
       const fn = x => compiled.evaluate({ x, t: this.time });
 
-      // 合成 f(g(x)) を作成
-      const composedFn = (x) => fn(this.initialFn ? this.initialFn(x, this.time) : x);
+      // 合成 g(f(x)) を作成（初期設定関数 g を後段に適用）
+      const composedFn = (x) => this.initialFn ? this.initialFn(fn(x), this.time) : fn(x);
 
       // 必須通過点の検証
       for (const rp of this.requiredPoints) {
