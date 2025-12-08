@@ -53,6 +53,10 @@ export class Game {
     this.running = true;
     this.state = "playing";
 
+    // 時間管理（t 変数用）
+    this.startTime = performance.now();
+    this.time = 0;
+
     // 関数更新アニメーション用
     this.functionUpdateAnimation = null;
 
@@ -137,8 +141,8 @@ export class Game {
   setFunction(expr) {
     try {
       const compiled = math.compile(expr);
-      compiled.evaluate({ x: 0 });
-      const fn = x => compiled.evaluate({ x });
+      compiled.evaluate({ x: 0, t: this.time });
+      const fn = x => compiled.evaluate({ x, t: this.time });
 
       // 必須通過点の検証
       for (const rp of this.requiredPoints) {
@@ -361,6 +365,14 @@ export class Game {
     this.requiredPoints.forEach(rp => rp.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY));
     this.goal.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
     this.player.draw(ctx, this.originX, this.originY, this.scaleX, this.scaleY);
+
+    // 時間表示 (右上)
+    ctx.save();
+    ctx.fillStyle = "#333";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "right";
+    ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 20);
+    ctx.restore();
 
     // 関数更新アニメーション描画
     if (this.functionUpdateAnimation) {
@@ -664,6 +676,9 @@ export class Game {
 
   // === ゲームループ ===
   loop() {
+    // 経過時間を秒で更新
+    this.time = (performance.now() - this.startTime) / 1000;
+
     this.update();
     this.draw();
     if (this.running) {
