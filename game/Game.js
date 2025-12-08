@@ -94,6 +94,19 @@ export class Game {
 
       // ゴール
       this.goal = new Goal(stage.goal.x, stage.goal.y);
+
+      // 初期設定関数 g(x)（合成用）
+      this.initialFunctionText = stage.initialFunction || "x";
+      try {
+        const compiledInit = math.compile(this.initialFunctionText);
+        // 検証
+        compiledInit.evaluate({ x: 0, t: 0 });
+        this.initialFn = (x, t) => compiledInit.evaluate({ x, t });
+      } catch (e) {
+        console.warn('初期設定関数の読み込みに失敗しました。identityにフォールバックします', e);
+        this.initialFunctionText = "x";
+        this.initialFn = (x) => x;
+      }
     }
   }
 
@@ -144,9 +157,12 @@ export class Game {
       compiled.evaluate({ x: 0, t: this.time });
       const fn = x => compiled.evaluate({ x, t: this.time });
 
+      // 合成 f(g(x)) を作成
+      const composedFn = (x) => fn(this.initialFn ? this.initialFn(x, this.time) : x);
+
       // 必須通過点の検証
       for (const rp of this.requiredPoints) {
-        if (!rp.check(fn)) {
+        if (!rp.check(composedFn)) {
           const input = document.getElementById('expr');
           if (input) input.value = this.fnText;
           alert('要求された点を通っていません');
@@ -154,7 +170,7 @@ export class Game {
         }
       }
 
-      this.functionPlatform.fn = fn;
+      this.functionPlatform.fn = composedFn;
       this.fnText = expr;
       this.updateDisplayLatex(expr);
       const input = document.getElementById('expr');
@@ -281,6 +297,8 @@ export class Game {
     this.collectibles.forEach(c => c.collected = false);
     this.state = "playing";
     this.functionPlatform.fn = x => 0;
+    this.startTime = performance.now();
+    this.time = 0;
     const input = document.getElementById('expr');
     if (input) input.value = '0';
     // BGM再生
