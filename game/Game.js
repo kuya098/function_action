@@ -28,7 +28,7 @@ export class Game {
   static get BTN_MARGIN() { return 24; }
   static get COIN_SIZE() { return 60; }
   static get COIN_MARGIN() { return 30; }
-  static get MAX_STAGE() { return 4; }
+  static get MAX_STAGE() { return 5; }
 
   constructor(canvas, ctx, stageId) {
     this.canvas = canvas;

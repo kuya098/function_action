@@ -79,7 +79,8 @@ export function drawHome(ctx, canvas, onStageSelect) {
     { id: 1, name: 'ステージ1' },
     { id: 2, name: 'ステージ2' },
     { id: 3, name: 'ステージ3' },
-    { id: 4, name: 'ステージ4' }
+    { id: 4, name: 'ステージ4' },
+    { id: 5, name: 'ステージ5' }
   ];
 
   stages.forEach(stage => {
