@@ -408,12 +408,14 @@ export class Game {
     const key = `stage_${this.stageId}_clear`;
     const totalCollectibles = this.collectibles.length;
     const collectedCount = this.collectedCount;
+    const clearTime = this.time; // 現在のクリア時間（秒）
     
     // 既存のデータを取得
     const existingData = localStorage.getItem(key);
     let bestCollected = collectedCount;
     let bestFunctionChangeCount = this.functionChangeCount;
     let oneShotTrophy = false; // 永続トロフィー
+    let bestTime = clearTime;
     
     if (existingData) {
       const data = JSON.parse(existingData);
@@ -424,6 +426,10 @@ export class Game {
       }
       // 既存の永続トロフィーを引き継ぐ
       oneShotTrophy = Boolean(data.oneShotTrophy);
+      // 最速クリアタイムを更新（少ない方が良い）
+      if (typeof data.bestTime === 'number' && isFinite(data.bestTime)) {
+        bestTime = Math.min(data.bestTime, clearTime);
+      }
     }
     // 今回のプレイで条件達成ならトロフィー付与（全コイン取得 かつ 関数変更1回のみ）
     if (collectedCount === totalCollectibles && this.functionChangeCount <= 1) {
@@ -435,7 +441,8 @@ export class Game {
       collected: bestCollected,
       total: totalCollectibles,
       functionChangeCount: bestFunctionChangeCount,
-      oneShotTrophy
+      oneShotTrophy,
+      bestTime
     }));
   }
 
