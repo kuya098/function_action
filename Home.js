@@ -147,6 +147,15 @@ export function drawHome(ctx, canvas, onStageSelect) {
       gap: 8px;
     `;
 
+    // 最速タイム表示（存在する場合・トロフィーの左）
+    if (clearData && typeof clearData.bestTime === 'number' && isFinite(clearData.bestTime)) {
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = `最速 ${clearData.bestTime.toFixed(2)}s`;
+      timeSpan.style.fontSize = '14px';
+      timeSpan.style.opacity = '0.9';
+      rateDiv.appendChild(timeSpan);
+    }
+
     // ワンショットバッジ
     if (isOneShot) {
       const trophyIcon = document.createElement('i');
@@ -165,15 +174,6 @@ export function drawHome(ctx, canvas, onStageSelect) {
     rateText.textContent = `${clearRate}%`;
     rateText.style.fontSize = '16px';
     rateDiv.appendChild(rateText);
-
-    // 最速タイム表示（存在する場合）
-    if (clearData && typeof clearData.bestTime === 'number' && isFinite(clearData.bestTime)) {
-      const timeSpan = document.createElement('span');
-      timeSpan.textContent = ` / 最速 ${clearData.bestTime.toFixed(2)}s`;
-      timeSpan.style.fontSize = '14px';
-      timeSpan.style.opacity = '0.9';
-      rateDiv.appendChild(timeSpan);
-    }
 
     button.appendChild(label);
     button.appendChild(rateDiv);
