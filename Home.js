@@ -91,9 +91,16 @@ export function drawHome(ctx, canvas, onStageSelect) {
     const clearRate = getClearRate(stage.id);
     const clearData = getClearData(stage.id);
     // トロフィー表示条件: 全コイン取得 かつ 関数変更1回のみ
-    const isOneShot = clearData 
-      && clearData.functionChangeCount === 1 
-      && clearData.collected === clearData.total;
+    // 環境差による型揺れを防ぐため数値に正規化
+    const collected = clearData ? Number(clearData.collected) : 0;
+    const total = clearData ? Number(clearData.total) : 0;
+    const fnCount = clearData && clearData.functionChangeCount !== undefined
+      ? Number(clearData.functionChangeCount)
+      : NaN; // 旧データの場合はNaN
+    const isOneShot = clearData && Number.isFinite(fnCount) && fnCount === 1 && collected === total;
+    if (clearData && typeof window !== 'undefined' && window.localStorage) {
+      console.debug(`[Home] stage ${stage.id} trophy check`, { collected, total, fnCount, isOneShot, clearData });
+    }
     
     const button = document.createElement('button');
     button.style.cssText = `
