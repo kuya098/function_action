@@ -63,6 +63,9 @@ export class Game {
     // 関数変更回数
     this.functionChangeCount = 0;
 
+    // t使用解禁フラグ（全ステージ100%クリアでtrue）
+    this.isTimeUnlocked = this.checkTimeUnlocked();
+
     this.initInput();
     this.initClickHandler();
     this.initInputField();
@@ -113,6 +116,31 @@ export class Game {
     }
   }
 
+  // 全ステージ100%クリアかどうかを判定し、t使用の解禁可否を返す
+  checkTimeUnlocked() {
+    try {
+      for (let id = 1; id <= Game.MAX_STAGE; id++) {
+        const key = `stage_${id}_clear`;
+        const raw = localStorage.getItem(key);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        const collected = Number(data.collected ?? -1);
+        const total = Number(data.total ?? -1);
+        if (!data.cleared || !Number.isFinite(collected) || !Number.isFinite(total) || collected !== total) {
+          return false;
+        }
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 現在のt値（ロック時は0を返す）
+  getCurrentTime() {
+    return this.isTimeUnlocked ? this.time : 0;
+  }
+
   // === 入力処理 ===
   initInput() {
     document.addEventListener("keydown", e => {
@@ -157,11 +185,12 @@ export class Game {
   setFunction(expr) {
     try {
       const compiled = math.compile(expr);
-      compiled.evaluate({ x: 0, t: this.time });
-      const fn = x => compiled.evaluate({ x, t: this.time });
+      const currentT = this.getCurrentTime();
+      compiled.evaluate({ x: 0, t: currentT });
+      const fn = x => compiled.evaluate({ x, t: this.getCurrentTime() });
 
       // 合成 g(f(x)) を作成（初期設定関数 g を後段に適用）
-      const composedFn = (x) => this.initialFn ? this.initialFn(fn(x), this.time) : fn(x);
+      const composedFn = (x) => this.initialFn ? this.initialFn(fn(x), this.getCurrentTime()) : fn(x);
 
       // 必須通過点の検証
       for (const rp of this.requiredPoints) {
@@ -306,6 +335,8 @@ export class Game {
     this.startTime = performance.now();
     this.time = 0;
     this.functionChangeCount = 0;
+    // ステージクリア状況が更新されている可能性があるため再判定
+    this.isTimeUnlocked = this.checkTimeUnlocked();
     const input = document.getElementById('expr');
     if (input) input.value = '0';
     // BGM再生
