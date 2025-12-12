@@ -4,10 +4,13 @@
 import { soundManager } from './game/SoundManager.js';
 
 let stageData = {};
-fetch('game/stage_data.json')
+let stageDataLoaded = false;
+
+const stageDataPromise = fetch('game/stage_data.json')
   .then(response => response.json())
   .then(data => {
     stageData = data;
+    stageDataLoaded = true;
   });
 
 function getClearData(stageId) {
@@ -29,6 +32,11 @@ function getClearRate(stageId) {
 }
 
 export function drawHome(ctx, canvas, onStageSelect) {
+  // stageData の読み込み完了を待つ
+  if (!stageDataLoaded) {
+    return stageDataPromise.then(() => drawHome(ctx, canvas, onStageSelect));
+  }
+
   // クリア画面UIが残っていたら削除
   const scoreScreenUI = document.getElementById('score-screen-ui');
   if (scoreScreenUI) scoreScreenUI.remove();
