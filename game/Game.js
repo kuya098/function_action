@@ -402,8 +402,12 @@ export class Game {
     ctx.fillStyle = "#333";
     ctx.font = "14px Arial";
     ctx.textAlign = "right";
-    ctx.fillText("y = f(x)", this.WIDTH - 10, 20);
-    ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 38);
+    // 初期関数が"x"以外なら g(f(x)) の形式で表示
+    const compositionText = this.initialFunctionText === "x" 
+      ? "y = f(x)" 
+      : `y = ${this.initialFunctionText.replace(/x/g, "f(x)")}`;
+    ctx.fillText(compositionText, this.WIDTH - 10, 12);
+    ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 30);
     ctx.restore();
 
     // 関数更新アニメーション描画
