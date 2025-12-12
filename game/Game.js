@@ -480,9 +480,12 @@ export class Game {
     const compositionText = this.initialFunctionText === "x" 
       ? "y = f(x)" 
       : `y = ${this.initialFunctionText.replace(/x/g, "f(x)")}`;
-    ctx.fillText(compositionText, this.WIDTH - 10, 12);
+    const hudX = this.WIDTH - 10;
+    const compY = 12;
+    const timeY = 30;
+    ctx.fillText(compositionText, hudX, compY);
     if (this.isTimeUnlocked) {
-      ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 30);
+      ctx.fillText(`t = ${this.time.toFixed(2)}s`, hudX, timeY);
     }
     ctx.restore();
 
@@ -496,13 +499,16 @@ export class Game {
       ctx.textAlign = 'right';
       ctx.font = 'bold 16px Arial';
       ctx.fillStyle = `rgba(255, 165, 0, ${alpha})`;
-      ctx.fillText('t解禁!', this.WIDTH - 10, 50);
+      // テキストはHUD直下に表示
+      const labelY = this.isTimeUnlocked ? (timeY + 18) : (compY + 18);
+      ctx.fillText('t解禁!', hudX, labelY);
       // グロー効果の円
       ctx.beginPath();
       ctx.strokeStyle = `rgba(255, 165, 0, ${alpha})`;
       ctx.lineWidth = 3;
-      const gx = this.WIDTH - 10;
-      const gy = 30;
+      const gx = hudX;
+      // グローはt表示の位置（未解禁時は合成式位置）に合わせる
+      const gy = this.isTimeUnlocked ? timeY : compY;
       ctx.arc(gx, gy, glowRadius, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
