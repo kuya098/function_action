@@ -59,9 +59,19 @@ function showHome() {
   const inputContainer = document.querySelector('.input-container');
   if (inputContainer) inputContainer.style.display = 'flex';
 
-  removeHomeClick = drawHome(ctx, canvas, stageId => {
+  const result = drawHome(ctx, canvas, stageId => {
     showGame(stageId);
   });
+  
+  // drawHome が Promise を返す場合に対応
+  if (result && typeof result.then === 'function') {
+    result.then(cleanup => {
+      removeHomeClick = cleanup;
+    });
+  } else {
+    removeHomeClick = result;
+  }
+  
   window.showHome = showHome;
 }
 
