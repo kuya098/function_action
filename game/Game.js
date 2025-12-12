@@ -489,28 +489,57 @@ export class Game {
     }
     ctx.restore();
 
-    // t解禁演出の描画
+    // t解禁演出の描画（中央に大きな"t"＋放射状の光）
     if (this.timeUnlockAnimation) {
       const elapsed = performance.now() - this.timeUnlockAnimation.start;
       const progress = Math.min(1, elapsed / this.timeUnlockAnimation.duration);
-      const alpha = 1 - progress;
-      const glowRadius = 18 + Math.sin(elapsed / 120) * 4;
+      const alpha = 1 - progress; // 徐々にフェードアウト
+      const cx = this.WIDTH / 2;
+      const cy = this.HEIGHT / 2;
+      const baseRadius = Math.min(this.WIDTH, this.HEIGHT) * 0.35;
+      const pulse = Math.sin(elapsed / 180) * 8;
+
       ctx.save();
-      ctx.textAlign = 'right';
-      ctx.font = 'bold 16px Arial';
-      ctx.fillStyle = `rgba(255, 165, 0, ${alpha})`;
-      // テキストはHUD直下に表示
-      const labelY = this.isTimeUnlocked ? (timeY + 18) : (compY + 18);
-      ctx.fillText('t解禁!', hudX, labelY);
-      // グロー効果の円
+      ctx.translate(cx, cy);
+
+      // 放射状の線（豪華な光）
+      const rays = 32;
+      for (let i = 0; i < rays; i++) {
+        const angle = (i / rays) * Math.PI * 2 + elapsed / 600; // ゆっくり回転
+        const len = baseRadius + pulse + (i % 2 === 0 ? 12 : 0);
+        const hue = (elapsed / 10 + i * 12) % 360;
+        ctx.strokeStyle = `hsla(${hue}, 100%, 60%, ${alpha * 0.7})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(angle) * 40, Math.sin(angle) * 40);
+        ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+        ctx.stroke();
+      }
+
+      // 外周のグローリング
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(255, 165, 0, ${alpha})`;
-      ctx.lineWidth = 3;
-      const gx = hudX;
-      // グローはt表示の位置（未解禁時は合成式位置）に合わせる
-      const gy = this.isTimeUnlocked ? timeY : compY;
-      ctx.arc(gx, gy, glowRadius, 0, Math.PI * 2);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = `rgba(255, 200, 80, ${alpha * 0.6})`;
+      ctx.arc(0, 0, baseRadius - 10 + pulse, 0, Math.PI * 2);
       ctx.stroke();
+
+      // 中央の大きな"t"
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const fontSize = 160;
+      ctx.font = `bold ${fontSize}px Arial`;
+      // 内側グラデーション風
+      const gradient = ctx.createRadialGradient(0, 0, 10, 0, 0, 120);
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+      gradient.addColorStop(1, `rgba(255, 180, 50, ${alpha})`);
+      ctx.fillStyle = gradient;
+      ctx.fillText('t', 0, -10);
+
+      // 下に解禁テキスト
+      ctx.font = 'bold 36px Arial';
+      ctx.fillStyle = `rgba(255, 200, 80, ${alpha})`;
+      ctx.fillText('解禁!', 0, 80);
+
       ctx.restore();
       if (progress >= 1) this.timeUnlockAnimation = null;
     }
