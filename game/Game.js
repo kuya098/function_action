@@ -113,10 +113,31 @@ export class Game {
       // ゴール
       this.goal = new Goal(stage.goal.x, stage.goal.y);
 
-      // 初期設定関数 g(x)（合成用）
-      this.initialFunctionText = stage.initialFunction || "x";
+      // 初期設定関数の処理（2つのタイプに対応）
+      // type: "postComposition" -> g(f(x))
+      // type: "preComposition" -> f(h(x))
+      // デフォルト: g(f(x)) タイプ
+      const initialFuncConfig = stage.initialFunction;
+      let initialFunctionText = "x";
+      let compositionType = "postComposition"; // デフォルト
+      
+      if (initialFuncConfig) {
+        if (typeof initialFuncConfig === 'string') {
+          // 旧形式（文字列）: postComposition として解釈
+          initialFunctionText = initialFuncConfig;
+          compositionType = "postComposition";
+        } else if (typeof initialFuncConfig === 'object') {
+          // 新形式（オブジェクト）
+          compositionType = initialFuncConfig.type || "postComposition";
+          initialFunctionText = initialFuncConfig.fn || "x";
+        }
+      }
+      
+      this.initialFunctionText = initialFunctionText;
+      this.compositionType = compositionType; // "postComposition" or "preComposition"
+      
       try {
-        const compiledInit = math.compile(this.initialFunctionText);
+        const compiledInit = math.compile(initialFunctionText);
         // 検証
         compiledInit.evaluate({ x: 0, t: 0 });
         this.initialFn = (x, t) => compiledInit.evaluate({ x, t });
@@ -124,6 +145,7 @@ export class Game {
         console.warn('初期設定関数の読み込みに失敗しました。identityにフォールバックします', e);
         this.initialFunctionText = "x";
         this.initialFn = (x) => x;
+        this.compositionType = "postComposition";
       }
     }
   }
@@ -214,8 +236,15 @@ export class Game {
       compiled.evaluate({ x: 0, t: currentT });
       const fn = x => compiled.evaluate({ x, t: this.getCurrentTime() });
 
-      // 合成 g(f(x)) を作成（初期設定関数 g を後段に適用）
-      const composedFn = (x) => this.initialFn ? this.initialFn(fn(x), this.getCurrentTime()) : fn(x);
+      // 合成方法を選択
+      let composedFn;
+      if (this.compositionType === "preComposition") {
+        // f(h(x)): f は初期関数 h、h は入力関数
+        composedFn = (x) => fn(this.initialFn(x, this.getCurrentTime()));
+      } else {
+        // g(f(x)): g は初期関数、f は入力関数（デフォルト）
+        composedFn = (x) => this.initialFn ? this.initialFn(fn(x), this.getCurrentTime()) : fn(x);
+      }
 
       // 必須通過点の検証
       for (const rp of this.requiredPoints) {
@@ -489,10 +518,19 @@ export class Game {
     ctx.fillStyle = "#333";
     ctx.font = "14px Arial";
     ctx.textAlign = "right";
-    // 初期関数が"x"以外なら g(f(x)) の形式で表示
-    const compositionText = this.initialFunctionText === "x" 
-      ? "y = f(x)" 
-      : `y = ${this.initialFunctionText.replace(/x/g, "f(x)")}`;
+    
+    // 初期関数が"x"以外なら合成の形式で表示
+    let compositionText;
+    if (this.initialFunctionText === "x") {
+      compositionText = "y = f(x)";
+    } else if (this.compositionType === "preComposition") {
+      // f(h(x)): f は初期関数、h は入力関数
+      compositionText = `y = f(${this.initialFunctionText})`;
+    } else {
+      // g(f(x)): g は初期関数、f は入力関数
+      compositionText = `y = ${this.initialFunctionText.replace(/x/g, "f(x)")}`;
+    }
+    
     const hudX = this.WIDTH - 10;
     const compY = 12;
     const timeY = 30;

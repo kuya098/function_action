@@ -107,6 +107,9 @@
     ],
     "goal": { "x": 10, "y": 3.5 }
     ,
-    "initialFunction": "sin(x)"
+    "initialFunction": {
+      "type": "postComposition",
+      "fn": "sin(x)"
+    }
   }
 }
