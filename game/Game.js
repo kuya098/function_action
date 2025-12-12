@@ -69,6 +69,15 @@ export class Game {
     // t解禁演出
     this.timeUnlockAnimation = null; // { start: number, duration: number }
 
+    // すでに解禁状態に到達しており、まだ告知していなければ起動
+    try {
+      const announced = localStorage.getItem('time_unlocked_announced') === 'true';
+      if (this.isTimeUnlocked && !announced) {
+        localStorage.setItem('time_unlocked_announced', 'true');
+        this.triggerTimeUnlockEffect();
+      }
+    } catch {}
+
     this.initInput();
     this.initClickHandler();
     this.initInputField();
@@ -388,6 +397,7 @@ export class Game {
       const nowUnlocked = this.checkTimeUnlocked();
       if (!wasUnlocked && nowUnlocked) {
         this.isTimeUnlocked = true;
+        try { localStorage.setItem('time_unlocked_announced', 'true'); } catch {}
         this.triggerTimeUnlockEffect();
       }
     }
@@ -416,7 +426,7 @@ export class Game {
       oneShotTrophy = Boolean(data.oneShotTrophy);
     }
     // 今回のプレイで条件達成ならトロフィー付与（全コイン取得 かつ 関数変更1回のみ）
-    if (collectedCount === totalCollectibles && this.functionChangeCount === 1) {
+    if (collectedCount === totalCollectibles && this.functionChangeCount <= 1) {
       oneShotTrophy = true;
     }
     
