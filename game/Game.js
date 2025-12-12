@@ -592,6 +592,10 @@ export class Game {
     // 背景を暗く
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+    // t解禁演出中はスコア画面UIの表示を遅延（キャンバス上の演出を見せる）
+    if (this.timeUnlockAnimation) {
+      return;
+    }
     // スコア画面UIが既に表示されていれば再生成しない
     if (!document.getElementById('score-screen-ui')) {
       this.showScoreScreenUI();
