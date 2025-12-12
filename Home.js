@@ -10,14 +10,16 @@ fetch('game/stage_data.json')
     stageData = data;
   });
 
-function getClearRate(stageId) {
+function getClearData(stageId) {
   const key = `stage_${stageId}_clear`;
   const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+}
+
+function getClearRate(stageId) {
+  const clearData = getClearData(stageId);
   
-  if (!data) return 0;
-  
-  const clearData = JSON.parse(data);
-  if (!clearData.cleared) return 0;
+  if (!clearData || !clearData.cleared) return 0;
   
   // クリアで50%、コレクティブル取得率で残り50%
   const baseRate = 50;
@@ -87,6 +89,9 @@ export function drawHome(ctx, canvas, onStageSelect) {
 
   stages.forEach(stage => {
     const clearRate = getClearRate(stage.id);
+    const clearData = getClearData(stage.id);
+    const isOneShot = clearData && clearData.functionChangeCount === 1;
+    
     const button = document.createElement('button');
     button.style.cssText = `
       padding: 20px;
@@ -118,13 +123,22 @@ export function drawHome(ctx, canvas, onStageSelect) {
     const label = document.createElement('span');
     label.textContent = stage.name;
 
-    // クリア率表示
+    // クリア率表示とバッジ
     const rateDiv = document.createElement('div');
     rateDiv.style.cssText = `
       display: flex;
       align-items: center;
       gap: 8px;
     `;
+
+    // ワンショットバッジ
+    if (isOneShot) {
+      const trophyIcon = document.createElement('i');
+      trophyIcon.className = 'fas fa-trophy';
+      trophyIcon.style.color = '#FFD700';
+      trophyIcon.title = '1回の変更でクリア!';
+      rateDiv.appendChild(trophyIcon);
+    }
 
     const starIcon = document.createElement('i');
     starIcon.className = clearRate === 100 ? 'fas fa-star' : 'far fa-star';

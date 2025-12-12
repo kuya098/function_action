@@ -60,6 +60,9 @@ export class Game {
     // 関数更新アニメーション用
     this.functionUpdateAnimation = null;
 
+    // 関数変更回数
+    this.functionChangeCount = 0;
+
     this.initInput();
     this.initClickHandler();
     this.initInputField();
@@ -176,6 +179,9 @@ export class Game {
       const input = document.getElementById('expr');
       if (input) input.value = expr;
       soundManager.playSE('make_func');
+      
+      // 関数変更回数をカウント
+      this.functionChangeCount++;
       
       // 関数更新アニメーションを開始
       this.startFunctionUpdateAnimation();
@@ -299,6 +305,7 @@ export class Game {
     this.functionPlatform.fn = x => 0;
     this.startTime = performance.now();
     this.time = 0;
+    this.functionChangeCount = 0;
     const input = document.getElementById('expr');
     if (input) input.value = '0';
     // BGM再生
@@ -339,16 +346,22 @@ export class Game {
     // 既存のデータを取得
     const existingData = localStorage.getItem(key);
     let bestCollected = collectedCount;
+    let bestFunctionChangeCount = this.functionChangeCount;
     
     if (existingData) {
       const data = JSON.parse(existingData);
       bestCollected = Math.max(data.collected, collectedCount);
+      // 関数変更回数は少ない方が良い(ベストスコア)
+      if (data.functionChangeCount !== undefined) {
+        bestFunctionChangeCount = Math.min(data.functionChangeCount, this.functionChangeCount);
+      }
     }
     
     localStorage.setItem(key, JSON.stringify({
       cleared: true,
       collected: bestCollected,
-      total: totalCollectibles
+      total: totalCollectibles,
+      functionChangeCount: bestFunctionChangeCount
     }));
   }
 
