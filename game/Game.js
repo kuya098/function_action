@@ -184,6 +184,14 @@ export class Game {
 
   setFunction(expr) {
     try {
+      // t未解禁で式にtが含まれている場合は不正扱い
+      if (!this.isTimeUnlocked && /\bt\b/.test(expr)) {
+        const input = document.getElementById('expr');
+        if (input) input.value = this.fnText;
+        alert('この環境ではtは使用できません（全ステージ100%で解禁）');
+        return;
+      }
+
       const compiled = math.compile(expr);
       const currentT = this.getCurrentTime();
       compiled.evaluate({ x: 0, t: currentT });
@@ -438,7 +446,9 @@ export class Game {
       ? "y = f(x)" 
       : `y = ${this.initialFunctionText.replace(/x/g, "f(x)")}`;
     ctx.fillText(compositionText, this.WIDTH - 10, 12);
-    ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 30);
+    if (this.isTimeUnlocked) {
+      ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 30);
+    }
     ctx.restore();
 
     // 関数更新アニメーション描画
