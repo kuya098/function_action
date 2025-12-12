@@ -66,6 +66,9 @@ export class Game {
     // t使用解禁フラグ（全ステージ100%クリアでtrue）
     this.isTimeUnlocked = this.checkTimeUnlocked();
 
+    // t解禁演出
+    this.timeUnlockAnimation = null; // { start: number, duration: number }
+
     this.initInput();
     this.initClickHandler();
     this.initInputField();
@@ -141,6 +144,13 @@ export class Game {
     return this.isTimeUnlocked ? this.time : 0;
   }
 
+  // t解禁演出を開始
+  triggerTimeUnlockEffect() {
+    this.timeUnlockAnimation = { start: performance.now(), duration: 3000 };
+    // 既存のSEを流用（関数作成音）。必要なら専用SEに差し替え可
+    soundManager.playSE('make_func');
+  }
+
   // === 入力処理 ===
   initInput() {
     document.addEventListener("keydown", e => {
@@ -188,7 +198,7 @@ export class Game {
       if (!this.isTimeUnlocked && /\bt\b/.test(expr)) {
         const input = document.getElementById('expr');
         if (input) input.value = this.fnText;
-        alert('この環境ではtは使用できません（全ステージ100%で解禁）');
+        alert('tは使用できません（全ステージ100%で解禁）');
         return;
       }
 
@@ -373,6 +383,13 @@ export class Game {
       this.saveClearData();
       soundManager.playSE('goal');
       soundManager.stopBGM();
+      // クリアにより全ステージ100%に到達した場合、t解禁演出
+      const wasUnlocked = this.isTimeUnlocked;
+      const nowUnlocked = this.checkTimeUnlocked();
+      if (!wasUnlocked && nowUnlocked) {
+        this.isTimeUnlocked = true;
+        this.triggerTimeUnlockEffect();
+      }
     }
   }
 
@@ -450,6 +467,29 @@ export class Game {
       ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 30);
     }
     ctx.restore();
+
+    // t解禁演出の描画
+    if (this.timeUnlockAnimation) {
+      const elapsed = performance.now() - this.timeUnlockAnimation.start;
+      const progress = Math.min(1, elapsed / this.timeUnlockAnimation.duration);
+      const alpha = 1 - progress;
+      const glowRadius = 18 + Math.sin(elapsed / 120) * 4;
+      ctx.save();
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillStyle = `rgba(255, 165, 0, ${alpha})`;
+      ctx.fillText('t解禁!', this.WIDTH - 10, 50);
+      // グロー効果の円
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(255, 165, 0, ${alpha})`;
+      ctx.lineWidth = 3;
+      const gx = this.WIDTH - 10;
+      const gy = 30;
+      ctx.arc(gx, gy, glowRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      if (progress >= 1) this.timeUnlockAnimation = null;
+    }
 
     // 関数更新アニメーション描画
     if (this.functionUpdateAnimation) {
