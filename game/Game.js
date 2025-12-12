@@ -227,6 +227,12 @@ export class Game {
       if (e.key.toLowerCase() === "a") this.keys.left = true;
       if (e.key.toLowerCase() === "d") this.keys.right = true;
       if (e.key.toLowerCase() === "w") this.keys.up = true;
+      
+      // スペースキー
+      if (e.code === "Space") {
+        this.keys.up = true;
+        e.preventDefault(); // スペースキーのデフォルト動作を防止
+      }
     });
     document.addEventListener("keyup", e => {
       // 入力欄がfocus状態なら矢印キーを無視
@@ -244,6 +250,11 @@ export class Game {
       if (e.key.toLowerCase() === "a") this.keys.left = false;
       if (e.key.toLowerCase() === "d") this.keys.right = false;
       if (e.key.toLowerCase() === "w") this.keys.up = false;
+      
+      // スペースキー
+      if (e.code === "Space") {
+        this.keys.up = false;
+      }
     });
   }
 
