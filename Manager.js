@@ -23,6 +23,21 @@ const ctx = canvas.getContext('2d');
 let currentScreen = 'home';
 let removeHomeClick = null;
 let gameInstance = null;
+let stageData = {};
+
+// stage_data.jsonを読み込んで最大ステージ数を取得
+fetch('game/stage_data.json')
+  .then(response => response.json())
+  .then(data => {
+    stageData = data;
+  });
+
+function getMaxStage() {
+  const stageIds = Object.keys(stageData)
+    .filter(key => !isNaN(key))
+    .map(key => parseInt(key));
+  return Math.max(...stageIds, 1);
+}
 
 function showHome() {
   if (removeHomeClick) {
@@ -45,11 +60,7 @@ function showHome() {
   if (inputContainer) inputContainer.style.display = 'flex';
 
   removeHomeClick = drawHome(ctx, canvas, stageId => {
-    if (stageId <= 7) {
-      showGame(stageId);
-    } else {
-      alert(`ステージ${stageId} はまだ未実装です`);
-    }
+    showGame(stageId);
   });
   window.showHome = showHome;
 }
