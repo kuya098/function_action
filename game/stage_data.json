@@ -108,8 +108,7 @@
     "goal": { "x": 10, "y": 3.5 }
     ,
     "initialFunction": {
-      "type": "postComposition",
-      "fn": "sin(x)"
+      "postFn": "sin(x)"
     }
   },
   "8": {
@@ -129,11 +128,11 @@
       { "x": 3.0, "y": 3.5, "size": 1.0 }
     ],
     "requiredPoints": [
-      { "x": 2.5, "y": 2.5 }
+      { "x": 4.5, "y": 2 }
     ],
     "goal": { "x": 10.5, "y": 2.0 },
     "initialFunction": {
-      "fn": "x + 2",
+      "postFn": "x + 2",
       "preFn": "sin(x)"
     }
   }

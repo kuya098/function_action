@@ -119,58 +119,62 @@ export class Game {
       // ゴール
       this.goal = new Goal(stage.goal.x, stage.goal.y);
 
-      // 初期設定関数の処理（2つのタイプに対応）
-      // type: "postComposition" -> g(f(x))
-      // type: "preComposition" -> f(h(x))
+      // 初期設定関数の処理
+      // postFn: g(x) -> g(f(x))
+      // preFn: h(x) -> f(h(x))
       // 両方指定 -> g(f(h(x)))（自動的に3重合成）
-      // デフォルト: g(f(x)) タイプ
       const initialFuncConfig = stage.initialFunction;
-      let postFunctionText = "x";  // g または g'
-      let preFunctionText = null;  // f の場合のみ（preComposition用）
-      let compositionType = "postComposition"; // デフォルト
+      let postFunctionText = null;   // g(x)
+      let preFunctionText = null;    // h(x)
+      let compositionType = "none";  // デフォルト
       
       if (initialFuncConfig) {
         if (typeof initialFuncConfig === 'string') {
-          // 旧形式（文字列）: postComposition として解釈
+          // 旧形式（文字列）: postFn として解釈
           postFunctionText = initialFuncConfig;
           compositionType = "postComposition";
         } else if (typeof initialFuncConfig === 'object') {
           // 新形式（オブジェクト）
-          postFunctionText = initialFuncConfig.fn || "x";
+          postFunctionText = initialFuncConfig.postFn || null;
           preFunctionText = initialFuncConfig.preFn || null;
           
-          // type が明示的に指定されている場合
-          if (initialFuncConfig.type) {
-            compositionType = initialFuncConfig.type;
-          } else {
-            // type が指定されていない場合、preFn の有無で判定
-            compositionType = preFunctionText ? "composite" : "postComposition";
+          // postFn と preFn の有無で合成タイプを判定
+          if (postFunctionText && preFunctionText) {
+            compositionType = "composite";      // g(f(h(x)))
+          } else if (postFunctionText) {
+            compositionType = "postComposition"; // g(f(x))
+          } else if (preFunctionText) {
+            compositionType = "preComposition";  // f(h(x))
           }
         }
       }
       
-      this.postFunctionText = postFunctionText;
+      this.postFunctionText = postFunctionText || "x";
       this.preFunctionText = preFunctionText;
-      this.compositionType = compositionType; // "postComposition", "preComposition", or "composite"
+      this.compositionType = compositionType; // "none", "postComposition", "preComposition", or "composite"
       
       try {
-        const compiledPost = math.compile(postFunctionText);
-        compiledPost.evaluate({ x: 0, t: 0 });
-        this.postFn = (x, t) => compiledPost.evaluate({ x, t });
+        if (postFunctionText) {
+          const compiledPost = math.compile(postFunctionText);
+          compiledPost.evaluate({ x: 0, t: 0 });
+          this.postFn = (x, t) => compiledPost.evaluate({ x, t });
+        } else {
+          this.postFn = (x) => x;
+        }
       } catch (e) {
-        console.warn('postComposition関数の読み込みに失敗しました。identityにフォールバックします', e);
+        console.warn('postFn関数の読み込みに失敗しました。identityにフォールバックします', e);
         this.postFunctionText = "x";
         this.postFn = (x) => x;
       }
       
-      // preComposition 関数をコンパイル（指定されている場合）
+      // preFn 関数をコンパイル（指定されている場合）
       if (preFunctionText) {
         try {
           const compiledPre = math.compile(preFunctionText);
           compiledPre.evaluate({ x: 0, t: 0 });
           this.preFn = (x, t) => compiledPre.evaluate({ x, t });
         } catch (e) {
-          console.warn('preComposition関数の読み込みに失敗しました', e);
+          console.warn('preFn関数の読み込みに失敗しました', e);
           this.preFn = (x) => x;
         }
       }
