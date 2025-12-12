@@ -403,6 +403,7 @@ export class Game {
     const existingData = localStorage.getItem(key);
     let bestCollected = collectedCount;
     let bestFunctionChangeCount = this.functionChangeCount;
+    let oneShotTrophy = false; // 永続トロフィー
     
     if (existingData) {
       const data = JSON.parse(existingData);
@@ -411,13 +412,20 @@ export class Game {
       if (data.functionChangeCount !== undefined) {
         bestFunctionChangeCount = Math.min(data.functionChangeCount, this.functionChangeCount);
       }
+      // 既存の永続トロフィーを引き継ぐ
+      oneShotTrophy = Boolean(data.oneShotTrophy);
+    }
+    // 今回のプレイで条件達成ならトロフィー付与（全コイン取得 かつ 関数変更1回のみ）
+    if (collectedCount === totalCollectibles && this.functionChangeCount === 1) {
+      oneShotTrophy = true;
     }
     
     localStorage.setItem(key, JSON.stringify({
       cleared: true,
       collected: bestCollected,
       total: totalCollectibles,
-      functionChangeCount: bestFunctionChangeCount
+      functionChangeCount: bestFunctionChangeCount,
+      oneShotTrophy
     }));
   }
 

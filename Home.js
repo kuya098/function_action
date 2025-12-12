@@ -90,16 +90,22 @@ export function drawHome(ctx, canvas, onStageSelect) {
   stages.forEach(stage => {
     const clearRate = getClearRate(stage.id);
     const clearData = getClearData(stage.id);
-    // トロフィー表示条件: 全コイン取得 かつ 関数変更1回のみ
-    // 環境差による型揺れを防ぐため数値に正規化
-    const collected = clearData ? Number(clearData.collected) : 0;
-    const total = clearData ? Number(clearData.total) : 0;
-    const fnCount = clearData && clearData.functionChangeCount !== undefined
-      ? Number(clearData.functionChangeCount)
-      : NaN; // 旧データの場合はNaN
-    const isOneShot = clearData && Number.isFinite(fnCount) && fnCount === 1 && collected === total;
+    // トロフィー表示条件（永続）
+    // 一度達成したら`oneShotTrophy`で維持する
+    let isOneShot = false;
+    if (clearData) {
+      if (clearData.oneShotTrophy) {
+        isOneShot = true;
+      } else {
+        // 旧データやまだ一度も達成していない場合は、その場の条件で判定
+        const collected = Number(clearData.collected);
+        const total = Number(clearData.total);
+        const fnCount = clearData.functionChangeCount !== undefined ? Number(clearData.functionChangeCount) : NaN;
+        isOneShot = Number.isFinite(fnCount) && fnCount === 1 && collected === total;
+      }
+    }
     if (clearData && typeof window !== 'undefined' && window.localStorage) {
-      console.debug(`[Home] stage ${stage.id} trophy check`, { collected, total, fnCount, isOneShot, clearData });
+      console.debug(`[Home] stage ${stage.id} trophy check`, { isOneShot, clearData });
     }
     
     const button = document.createElement('button');
