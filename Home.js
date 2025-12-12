@@ -77,16 +77,17 @@ export function drawHome(ctx, canvas, onStageSelect) {
     gap: 15px;
   `;
 
-  const stages = [
-    { id: 1, name: 'ステージ1' },
-    { id: 2, name: 'ステージ2' },
-    { id: 3, name: 'ステージ3' },
-    { id: 4, name: 'ステージ4' },
-    { id: 5, name: 'ステージ5' },
-    { id: 6, name: 'ステージ6' },
-    { id: 7, name: 'ステージ7' },
-    { id: 8, name: 'ステージ8' }
-  ];
+  // stage_data.json から自動的にステージを生成
+  // 数値キーを抽出（_note などの非数値キーを除外）
+  const stageIds = Object.keys(stageData)
+    .filter(key => !isNaN(key))
+    .map(key => parseInt(key))
+    .sort((a, b) => a - b);
+  
+  const stages = stageIds.map(id => ({
+    id,
+    name: `ステージ${id}`
+  }));
 
   stages.forEach(stage => {
     const clearRate = getClearRate(stage.id);

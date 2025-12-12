@@ -28,7 +28,13 @@ export class Game {
   static get BTN_MARGIN() { return 24; }
   static get COIN_SIZE() { return 60; }
   static get COIN_MARGIN() { return 30; }
-  static get MAX_STAGE() { return 8; }
+  static get MAX_STAGE() {
+    // stage_data.json から数値キーの最大値を動的に計算
+    const stageIds = Object.keys(stageData)
+      .filter(key => !isNaN(key))
+      .map(key => parseInt(key));
+    return Math.max(...stageIds, 1);
+  }
 
   constructor(canvas, ctx, stageId) {
     this.canvas = canvas;
