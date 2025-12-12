@@ -409,13 +409,14 @@ export class Game {
     const totalCollectibles = this.collectibles.length;
     const collectedCount = this.collectedCount;
     const clearTime = this.time; // 現在のクリア時間（秒）
+    const isFullCollect = collectedCount === totalCollectibles; // 全コイン取得判定
     
     // 既存のデータを取得
     const existingData = localStorage.getItem(key);
     let bestCollected = collectedCount;
     let bestFunctionChangeCount = this.functionChangeCount;
     let oneShotTrophy = false; // 永続トロフィー
-    let bestTime = clearTime;
+    let bestTime = isFullCollect ? clearTime : undefined; // 全コイン取得時のみタイム記録
     
     if (existingData) {
       const data = JSON.parse(existingData);
@@ -426,24 +427,35 @@ export class Game {
       }
       // 既存の永続トロフィーを引き継ぐ
       oneShotTrophy = Boolean(data.oneShotTrophy);
-      // 最速クリアタイムを更新（少ない方が良い）
-      if (typeof data.bestTime === 'number' && isFinite(data.bestTime)) {
-        bestTime = Math.min(data.bestTime, clearTime);
+      // 最速クリアタイムを更新（全コイン取得時のみ、少ない方が良い）
+      if (isFullCollect) {
+        if (typeof data.bestTime === 'number' && isFinite(data.bestTime)) {
+          bestTime = Math.min(data.bestTime, clearTime);
+        } else {
+          bestTime = clearTime;
+        }
+      } else {
+        // 全コイン未取得なら既存のbestTimeを保持
+        bestTime = data.bestTime;
       }
     }
     // 今回のプレイで条件達成ならトロフィー付与（全コイン取得 かつ 関数変更1回のみ）
-    if (collectedCount === totalCollectibles && this.functionChangeCount <= 1) {
+    if (isFullCollect && this.functionChangeCount <= 1) {
       oneShotTrophy = true;
     }
     
-    localStorage.setItem(key, JSON.stringify({
+    const saveData = {
       cleared: true,
       collected: bestCollected,
       total: totalCollectibles,
       functionChangeCount: bestFunctionChangeCount,
-      oneShotTrophy,
-      bestTime
-    }));
+      oneShotTrophy
+    };
+    // bestTimeはundefinedなら保存しない（後方互換性）
+    if (bestTime !== undefined) {
+      saveData.bestTime = bestTime;
+    }
+    localStorage.setItem(key, JSON.stringify(saveData));
   }
 
   checkCollisions() {
