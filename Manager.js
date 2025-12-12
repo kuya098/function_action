@@ -40,6 +40,10 @@ function showHome() {
     button.remove();
   }
 
+  // ホーム画面では入力欄を表示
+  const inputContainer = document.querySelector('.input-container');
+  if (inputContainer) inputContainer.style.display = 'flex';
+
   removeHomeClick = drawHome(ctx, canvas, stageId => {
     if (stageId <= 7) {
       showGame(stageId);
@@ -55,6 +59,9 @@ function showSettings() {
     removeHomeClick();
     removeHomeClick = null;
   }
+  // 設定画面では入力欄を非表示
+  const inputContainer = document.querySelector('.input-container');
+  if (inputContainer) inputContainer.style.display = 'none';
   drawSettings(ctx, canvas, () => {
     showHome();
   });
