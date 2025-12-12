@@ -218,9 +218,15 @@ export class Game {
         return;
       }
       
+      // 矢印キー
       if (e.code === "ArrowLeft") this.keys.left = true;
       if (e.code === "ArrowRight") this.keys.right = true;
       if (e.code === "ArrowUp") this.keys.up = true;
+      
+      // WASDキー（大文字小文字両対応）
+      if (e.key.toLowerCase() === "a") this.keys.left = true;
+      if (e.key.toLowerCase() === "d") this.keys.right = true;
+      if (e.key.toLowerCase() === "w") this.keys.up = true;
     });
     document.addEventListener("keyup", e => {
       // 入力欄がfocus状態なら矢印キーを無視
@@ -229,9 +235,15 @@ export class Game {
         return;
       }
       
+      // 矢印キー
       if (e.code === "ArrowLeft") this.keys.left = false;
       if (e.code === "ArrowRight") this.keys.right = false;
       if (e.code === "ArrowUp") this.keys.up = false;
+      
+      // WASDキー（大文字小文字両対応）
+      if (e.key.toLowerCase() === "a") this.keys.left = false;
+      if (e.key.toLowerCase() === "d") this.keys.right = false;
+      if (e.key.toLowerCase() === "w") this.keys.up = false;
     });
   }
 
