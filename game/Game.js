@@ -113,53 +113,59 @@ export class Game {
       // ゴール
       this.goal = new Goal(stage.goal.x, stage.goal.y);
 
-      // 初期設定関数の処理（3つのタイプに対応）
+      // 初期設定関数の処理（2つのタイプに対応）
       // type: "postComposition" -> g(f(x))
       // type: "preComposition" -> f(h(x))
-      // type: "tripleComposition" -> g(f(h(x)))
+      // 両方指定 -> g(f(h(x)))（自動的に3重合成）
       // デフォルト: g(f(x)) タイプ
       const initialFuncConfig = stage.initialFunction;
-      let initialFunctionText = "x";
+      let postFunctionText = "x";  // g または g'
+      let preFunctionText = null;  // f の場合のみ（preComposition用）
       let compositionType = "postComposition"; // デフォルト
-      let secondaryFunction = null; // tripleComposition用
       
       if (initialFuncConfig) {
         if (typeof initialFuncConfig === 'string') {
           // 旧形式（文字列）: postComposition として解釈
-          initialFunctionText = initialFuncConfig;
+          postFunctionText = initialFuncConfig;
           compositionType = "postComposition";
         } else if (typeof initialFuncConfig === 'object') {
           // 新形式（オブジェクト）
-          compositionType = initialFuncConfig.type || "postComposition";
-          initialFunctionText = initialFuncConfig.fn || "x";
-          secondaryFunction = initialFuncConfig.secondaryFn || null; // tripleComposition用
+          postFunctionText = initialFuncConfig.fn || "x";
+          preFunctionText = initialFuncConfig.preFn || null;
+          
+          // type が明示的に指定されている場合
+          if (initialFuncConfig.type) {
+            compositionType = initialFuncConfig.type;
+          } else {
+            // type が指定されていない場合、preFn の有無で判定
+            compositionType = preFunctionText ? "composite" : "postComposition";
+          }
         }
       }
       
-      this.initialFunctionText = initialFunctionText;
-      this.compositionType = compositionType; // "postComposition", "preComposition", or "tripleComposition"
-      this.secondaryFunctionText = secondaryFunction;
+      this.postFunctionText = postFunctionText;
+      this.preFunctionText = preFunctionText;
+      this.compositionType = compositionType; // "postComposition", "preComposition", or "composite"
       
       try {
-        const compiledInit = math.compile(initialFunctionText);
-        compiledInit.evaluate({ x: 0, t: 0 });
-        this.initialFn = (x, t) => compiledInit.evaluate({ x, t });
+        const compiledPost = math.compile(postFunctionText);
+        compiledPost.evaluate({ x: 0, t: 0 });
+        this.postFn = (x, t) => compiledPost.evaluate({ x, t });
       } catch (e) {
-        console.warn('初期設定関数の読み込みに失敗しました。identityにフォールバックします', e);
-        this.initialFunctionText = "x";
-        this.initialFn = (x) => x;
-        this.compositionType = "postComposition";
+        console.warn('postComposition関数の読み込みに失敗しました。identityにフォールバックします', e);
+        this.postFunctionText = "x";
+        this.postFn = (x) => x;
       }
       
-      // tripleComposition の場合、secondaryFn をコンパイル
-      if (this.compositionType === "tripleComposition" && secondaryFunction) {
+      // preComposition 関数をコンパイル（指定されている場合）
+      if (preFunctionText) {
         try {
-          const compiledSecondary = math.compile(secondaryFunction);
-          compiledSecondary.evaluate({ x: 0, t: 0 });
-          this.secondaryFn = (x, t) => compiledSecondary.evaluate({ x, t });
+          const compiledPre = math.compile(preFunctionText);
+          compiledPre.evaluate({ x: 0, t: 0 });
+          this.preFn = (x, t) => compiledPre.evaluate({ x, t });
         } catch (e) {
-          console.warn('二次関数の読み込みに失敗しました', e);
-          this.secondaryFn = (x) => x;
+          console.warn('preComposition関数の読み込みに失敗しました', e);
+          this.preFn = (x) => x;
         }
       }
     }
@@ -253,17 +259,16 @@ export class Game {
 
       // 合成方法を選択
       let composedFn;
-      if (this.compositionType === "preComposition") {
-        // f(h(x)): f は初期関数、h は入力関数
-        composedFn = (x) => fn(this.initialFn(x, this.getCurrentTime()));
-      } else if (this.compositionType === "tripleComposition") {
-        // g(f(h(x))): g は initialFn、f は secondaryFn、h は入力関数
-        composedFn = (x) => this.initialFn ? 
-          this.initialFn(this.secondaryFn(fn(x), this.getCurrentTime()), this.getCurrentTime()) : 
-          this.secondaryFn(fn(x), this.getCurrentTime());
+      if (this.compositionType === "composite") {
+        // g(f(h(x))): g は postFn、f は preFn、h は入力関数
+        const inner = this.preFn(fn(x), this.getCurrentTime());
+        composedFn = (x) => this.postFn(this.preFn(fn(x), this.getCurrentTime()), this.getCurrentTime());
+      } else if (this.compositionType === "preComposition") {
+        // f(h(x)): f は postFn（preFn として使用）、h は入力関数
+        composedFn = (x) => fn(this.postFn(x, this.getCurrentTime()));
       } else {
-        // g(f(x)): g は初期関数、f は入力関数（デフォルト）
-        composedFn = (x) => this.initialFn ? this.initialFn(fn(x), this.getCurrentTime()) : fn(x);
+        // g(f(x)): g は postFn、f は入力関数（デフォルト）
+        composedFn = (x) => this.postFn(fn(x), this.getCurrentTime());
       }
 
       // 必須通過点の検証
@@ -541,18 +546,17 @@ export class Game {
     
     // 初期関数が"x"以外なら合成の形式で表示
     let compositionText;
-    if (this.initialFunctionText === "x") {
+    if (this.postFunctionText === "x" && !this.preFunctionText) {
       compositionText = "y = f(x)";
+    } else if (this.compositionType === "composite") {
+      // g(f(h(x))): g は postFn、f は preFn、h は入力関数
+      compositionText = `y = ${this.postFunctionText.replace(/x/g, `${this.preFunctionText}(f(x))`)}`;
     } else if (this.compositionType === "preComposition") {
-      // f(h(x)): f は初期関数、h は入力関数
-      compositionText = `y = f(${this.initialFunctionText})`;
-    } else if (this.compositionType === "tripleComposition") {
-      // g(f(h(x))): g は初期関数、f は secondaryFn、h は入力関数
-      const secFnText = this.secondaryFunctionText || "f";
-      compositionText = `y = ${this.initialFunctionText.replace(/x/g, `${secFnText}(f(x))`)}`;
+      // f(h(x)): f は postFn（preFn として使用）、h は入力関数
+      compositionText = `y = f(${this.postFunctionText})`;
     } else {
-      // g(f(x)): g は初期関数、f は入力関数
-      compositionText = `y = ${this.initialFunctionText.replace(/x/g, "f(x)")}`;
+      // g(f(x)): g は postFn、f は入力関数
+      compositionText = `y = ${this.postFunctionText.replace(/x/g, "f(x)")}`;
     }
     
     const hudX = this.WIDTH - 10;

@@ -134,9 +134,8 @@
     ],
     "goal": { "x": 10.5, "y": 2.0 },
     "initialFunction": {
-      "type": "tripleComposition",
       "fn": "x + 2",
-      "secondaryFn": "sin(x)"
+      "preFn": "sin(x)"
     }
   }
 }
