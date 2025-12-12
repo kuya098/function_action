@@ -523,7 +523,7 @@ export class Game {
       ctx.arc(0, 0, baseRadius - 10 + pulse, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 中央の大きな"t"
+      // 中央の大きな"t"（少し下げる）
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const fontSize = 160;
@@ -533,12 +533,12 @@ export class Game {
       gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
       gradient.addColorStop(1, `rgba(255, 180, 50, ${alpha})`);
       ctx.fillStyle = gradient;
-      ctx.fillText('t', 0, -10);
+      ctx.fillText('t', 0, 20);
 
-      // 下に解禁テキスト
+      // 下に解禁テキスト（位置も少し下げる）
       ctx.font = 'bold 36px Arial';
       ctx.fillStyle = `rgba(255, 200, 80, ${alpha})`;
-      ctx.fillText('解禁!', 0, 80);
+      ctx.fillText('解禁!', 0, 110);
 
       ctx.restore();
       if (progress >= 1) this.timeUnlockAnimation = null;
@@ -624,13 +624,13 @@ export class Game {
 
   drawUI() {
     const ctx = this.ctx;
-    // 背景を暗く
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
-    // t解禁演出中はスコア画面UIの表示を遅延（キャンバス上の演出を見せる）
+    // t解禁演出中は背景暗転も含めてスコア画面表示を遅延
     if (this.timeUnlockAnimation) {
       return;
     }
+    // 背景を暗く（演出終了後に適用）
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
     // スコア画面UIが既に表示されていれば再生成しない
     if (!document.getElementById('score-screen-ui')) {
       this.showScoreScreenUI();
