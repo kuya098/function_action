@@ -147,14 +147,16 @@ export function drawHome(ctx, canvas, onStageSelect) {
       gap: 8px;
     `;
 
-    // 最速タイム表示（存在する場合・トロフィーの左）
+    // 最速タイム表示（存在しない場合は--.--sを表示）
+    const timeSpan = document.createElement('span');
     if (clearData && typeof clearData.bestTime === 'number' && isFinite(clearData.bestTime)) {
-      const timeSpan = document.createElement('span');
       timeSpan.textContent = `タイム ${clearData.bestTime.toFixed(2)}s`;
-      timeSpan.style.fontSize = '14px';
-      timeSpan.style.opacity = '0.9';
-      rateDiv.appendChild(timeSpan);
+    } else {
+      timeSpan.textContent = `タイム --.--s`;
     }
+    timeSpan.style.fontSize = '14px';
+    timeSpan.style.opacity = '0.9';
+    rateDiv.appendChild(timeSpan);
 
     // ワンショットバッジ
     if (isOneShot) {
