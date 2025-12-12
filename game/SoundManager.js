@@ -47,6 +47,8 @@ export class SoundManager {
     
     if (this.sounds[name]) {
       this.bgm = this.sounds[name];
+      // 直近の設定値を反映してから再生
+      this.bgm.volume = this.bgmVolume;
       this.bgm.currentTime = 0;
       this.bgm.play().catch(e => console.log('BGM play error:', e));
     }

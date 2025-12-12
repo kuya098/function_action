@@ -205,8 +205,6 @@ export class Game {
     try {
       // t未解禁で式にtが含まれている場合は不正扱い
       if (!this.isTimeUnlocked && /\bt\b/.test(expr)) {
-        const input = document.getElementById('expr');
-        if (input) input.value = this.fnText;
         alert('tは使用できません（全ステージ100%で解禁）');
         return;
       }
@@ -222,8 +220,6 @@ export class Game {
       // 必須通過点の検証
       for (const rp of this.requiredPoints) {
         if (!rp.check(composedFn)) {
-          const input = document.getElementById('expr');
-          if (input) input.value = this.fnText;
           alert('要求された点を通っていません');
           return;
         }
@@ -242,8 +238,6 @@ export class Game {
       // 関数更新アニメーションを開始
       this.startFunctionUpdateAnimation();
     } catch (e) {
-      const input = document.getElementById('expr');
-      if (input) input.value = this.fnText;
       alert('関数の式が不正です');
     }
   }
