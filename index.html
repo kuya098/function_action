@@ -36,6 +36,11 @@
       margin-top: 18px;
       width: 600px;
     }
+    .function-label {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
     #expr {
       flex: 1;
       font-size: 24px;
@@ -61,6 +66,7 @@
   <div class="center">
     <canvas id="canvas" width="600" height="400"></canvas>
     <div class="input-container">
+      <span class="function-label">f(x) =</span>
       <input id="expr" type="text" value="0" placeholder="関数を入力 (例: x^2, sin(x), x/2)" />
       <button id="drawBtn">描画</button>
     </div>
