@@ -90,7 +90,10 @@ export function drawHome(ctx, canvas, onStageSelect) {
   stages.forEach(stage => {
     const clearRate = getClearRate(stage.id);
     const clearData = getClearData(stage.id);
-    const isOneShot = clearData && clearData.functionChangeCount === 1;
+    // トロフィー表示条件: 全コイン取得 かつ 関数変更1回のみ
+    const isOneShot = clearData 
+      && clearData.functionChangeCount === 1 
+      && clearData.collected === clearData.total;
     
     const button = document.createElement('button');
     button.style.cssText = `
@@ -136,7 +139,7 @@ export function drawHome(ctx, canvas, onStageSelect) {
       const trophyIcon = document.createElement('i');
       trophyIcon.className = 'fas fa-trophy';
       trophyIcon.style.color = '#FFD700';
-      trophyIcon.title = '1回の変更でクリア!';
+      trophyIcon.title = '全コイン取得 & 1回の関数でクリア!';
       rateDiv.appendChild(trophyIcon);
     }
 
