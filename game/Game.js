@@ -402,7 +402,8 @@ export class Game {
     ctx.fillStyle = "#333";
     ctx.font = "14px Arial";
     ctx.textAlign = "right";
-    ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 20);
+    ctx.fillText("y = f(x)", this.WIDTH - 10, 20);
+    ctx.fillText(`t = ${this.time.toFixed(2)}s`, this.WIDTH - 10, 38);
     ctx.restore();
 
     // 関数更新アニメーション描画
