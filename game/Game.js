@@ -177,6 +177,8 @@ export class Game {
           console.warn('preFn関数の読み込みに失敗しました', e);
           this.preFn = (x) => x;
         }
+      } else {
+        this.preFn = (x) => x;  // デフォルトは恒等関数
       }
     }
   }
@@ -293,14 +295,13 @@ export class Game {
       // 合成方法を選択
       let composedFn;
       if (this.compositionType === "composite") {
-        // g(f(h(x))): g は postFn、f は preFn、h は入力関数
-        const inner = this.preFn(fn(x), this.getCurrentTime());
-        composedFn = (x) => this.postFn(this.preFn(fn(x), this.getCurrentTime()), this.getCurrentTime());
+        // g(f(h(x))): g は postFn、f は 入力関数、h は preFn
+        composedFn = (x) => this.postFn(fn(this.preFn(x, this.getCurrentTime())), this.getCurrentTime());
       } else if (this.compositionType === "preComposition") {
-        // f(h(x)): f は postFn（preFn として使用）、h は入力関数
-        composedFn = (x) => fn(this.postFn(x, this.getCurrentTime()));
+        // f(h(x)): f は 入力関数、h は preFn
+        composedFn = (x) => fn(this.preFn(x, this.getCurrentTime()));
       } else {
-        // g(f(x)): g は postFn、f は入力関数（デフォルト）
+        // g(f(x)): g は postFn、f は 入力関数（デフォルト）
         composedFn = (x) => this.postFn(fn(x), this.getCurrentTime());
       }
 
@@ -582,13 +583,14 @@ export class Game {
     if (this.postFunctionText === "x" && !this.preFunctionText) {
       compositionText = "y = f(x)";
     } else if (this.compositionType === "composite") {
-      // g(f(h(x))): g は postFn、f は preFn、h は入力関数
-      compositionText = `y = ${this.postFunctionText.replace(/x/g, `${this.preFunctionText}(f(x))`)}`;
+      // g(f(h(x))): g は postFn、f は 入力関数、h は preFn
+      // preFn は文字列表現に (x) が含まれるため、二重に (x) を付けない
+      compositionText = `y = ${this.postFunctionText.replace(/x/g, `f(${this.preFunctionText})`)}`;
     } else if (this.compositionType === "preComposition") {
-      // f(h(x)): f は postFn（preFn として使用）、h は入力関数
-      compositionText = `y = f(${this.postFunctionText})`;
+      // f(h(x)): f は 入力関数、h は preFn
+      compositionText = `y = f(${this.preFunctionText}(x))`;
     } else {
-      // g(f(x)): g は postFn、f は入力関数
+      // g(f(x)): g は postFn、f は 入力関数
       compositionText = `y = ${this.postFunctionText.replace(/x/g, "f(x)")}`;
     }
     
