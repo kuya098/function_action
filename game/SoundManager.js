@@ -5,7 +5,10 @@ export class SoundManager {
     this.bgm = null;
     this.bgmVolume = 0.3;
     this.seVolume = 0.5;
+    this.audioUnlocked = false;
+    this.pendingBGM = null;
     this.loadSounds();
+    this.setupAudioUnlock();
   }
 
   loadSounds() {
@@ -32,6 +35,29 @@ export class SoundManager {
     }
   }
 
+  setupAudioUnlock() {
+    const unlockAudio = () => {
+      if (this.audioUnlocked) return;
+      
+      this.audioUnlocked = true;
+      
+      // 保留中のBGMがあれば再生
+      if (this.pendingBGM) {
+        this.playBGM(this.pendingBGM);
+        this.pendingBGM = null;
+      }
+      
+      // イベントリスナーを削除
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+    
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+  }
+
   playSE(name) {
     if (this.sounds[name]) {
       // 同じ音を重ねて再生できるようにクローンを作成
@@ -46,11 +72,22 @@ export class SoundManager {
     this.stopBGM();
     
     if (this.sounds[name]) {
+      // オーディオがアンロックされていない場合は保留
+      if (!this.audioUnlocked) {
+        this.pendingBGM = name;
+        return;
+      }
+      
       this.bgm = this.sounds[name];
       // 直近の設定値を反映してから再生
       this.bgm.volume = this.bgmVolume;
       this.bgm.currentTime = 0;
-      this.bgm.play().catch(e => console.log('BGM play error:', e));
+      this.bgm.play().catch(e => {
+        console.log('BGM play error:', e);
+        // 再生失敗時は保留扱いに
+        this.pendingBGM = name;
+        this.audioUnlocked = false;
+      });
     }
   }
 
